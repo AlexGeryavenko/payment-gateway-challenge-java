@@ -1,0 +1,25 @@
+@startuml C4 Level 2 - Container Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Payment Gateway - Container Diagram
+
+Person(merchant, "Merchant", "External system")
+
+System_Boundary(system, "Payment Gateway System") {
+    Container(app, "Spring Boot Application", "Java 25, Gradle 9, Spring Boot 4.0.2", "REST API for payment processing\n:8090\nAPI-first (OpenAPI generated)")
+    ContainerDb(store, "In-Memory Store", "ConcurrentHashMap", "Stores authorized/declined payments")
+}
+
+System_Ext(simulator, "Bank Simulator", "Mountebank :8080 (Docker)\nDo not modify")
+
+System_Ext(prometheus, "Prometheus", "Metrics collection\n:9090 (NFR-6)")
+System_Ext(grafana, "Grafana", "Dashboards & alerting\n:3000 (NFR-7)")
+
+Rel(merchant, app, "REST/JSON", "HTTP :8090")
+Rel(app, simulator, "REST/JSON", "HTTP :8080")
+Rel(app, store, "read/write")
+
+Rel(app, prometheus, "Exposes /actuator/prometheus", ":8090")
+Rel(prometheus, grafana, "Data source")
+
+@enduml

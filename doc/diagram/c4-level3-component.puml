@@ -1,0 +1,33 @@
+@startuml C4 Level 3 - Component Diagram (Target - Post-MVP)
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Payment Gateway - Component Diagram (Target Architecture after Post-MVP Refactoring)
+
+Container_Boundary(app, "Spring Boot Application") {
+
+    Component(controller, "PaymentController", "REST API", "Inbound adapter\nHandles POST /payment and GET /payment/{id}")
+
+    Component(processUC, "ProcessPaymentUseCase", "Domain Port (in)", "Interface for payment processing command")
+    Component(getUC, "GetPaymentUseCase", "Domain Port (in)", "Interface for payment retrieval query")
+
+    Component(processService, "ProcessPaymentService", "Domain Service", "Orchestrates validation, bank call, storage")
+    Component(getService, "GetPaymentService", "Domain Service", "Retrieves payment by ID")
+
+    Component(model, "Domain Model", "Entity + Value Objects", "Payment, CardNumber, Cvv,\nExpiryDate, Currency, Money")
+
+    Component(bankAdapter, "BankClientAdapter", "Outbound Adapter", "Generated bank client (RestClient) -> :8080\nWrapped with circuit breaker (NFR-11)")
+    Component(repoAdapter, "InMemoryPaymentRepository", "Outbound Adapter", "ConcurrentHashMap\nThread-safe (NFR-4)")
+}
+
+Rel(controller, processUC, "ProcessPaymentCommand")
+Rel(controller, getUC, "UUID")
+
+Rel(processUC, processService, "implements")
+Rel(getUC, getService, "implements")
+
+Rel(processService, model, "creates/validates")
+Rel(processService, bankAdapter, "BankRequest")
+Rel(processService, repoAdapter, "save(Payment)")
+Rel(getService, repoAdapter, "findById(UUID)")
+
+@enduml

@@ -1,0 +1,64 @@
+@startuml C4 Level 4 - Payment Processing Sequence
+title Payment Processing Flow
+
+actor Merchant as M
+participant "PaymentController" as C
+participant "ProcessPaymentService" as S
+participant "Value Objects\n(CardNumber, Cvv,\nExpiryDate, etc.)" as V
+participant "BankClientAdapter\n[generated RestClient +\ncircuit breaker: NFR-11]" as B
+participant "PaymentRepository" as R
+
+M -> C: POST /payment\n{card_number, expiry, currency, amount, cvv}
+activate C
+
+C -> S: execute(ProcessPaymentCommand)
+activate S
+
+S -> V: new CardNumber(raw)\nnew Cvv(raw)\nnew ExpiryDate(m, y)\n...
+activate V
+
+alt Validation fails (FR-1.3)
+    V --> S: throws PaymentValidationException
+    deactivate V
+    S --> C: ProcessPaymentResult(REJECTED)
+    C --> M: **400** {status: "Rejected"}
+else Validation passes
+    V --> S: Valid value objects
+    deactivate V
+
+    S -> B: authorize(BankRequest)
+    activate B
+    B -> B: POST http://localhost:8080/payments
+
+    alt Bank authorizes (FR-1.1)
+        B --> S: BankResponse(authorized=true, code=uuid)
+        deactivate B
+        S -> R: save(Payment{AUTHORIZED})
+        activate R
+        R --> S: stored
+        deactivate R
+        S --> C: ProcessPaymentResult(AUTHORIZED)
+        C --> M: **200** {id, status: "Authorized",\ncardNumberLastFour, ...}
+
+    else Bank declines (FR-1.2)
+        B --> S: BankResponse(authorized=false)
+        deactivate B
+        S -> R: save(Payment{DECLINED})
+        activate R
+        R --> S: stored
+        deactivate R
+        S --> C: ProcessPaymentResult(DECLINED)
+        C --> M: **200** {id, status: "Declined",\ncardNumberLastFour, ...}
+
+    else Bank error 503 (NFR-15)
+        B --> S: throws BankCommunicationException
+        deactivate B
+        S --> C: exception propagates
+        C --> M: **502** Bad Gateway
+    end
+end
+
+deactivate S
+deactivate C
+
+@enduml

@@ -1,0 +1,154 @@
+openapi: 3.1.0
+info:
+  title: Acquiring Bank Simulator API
+  description: |
+    Mountebank-based mock of the acquiring bank.
+    Contract source: `imposters/bank_simulator.ejs` — do not modify.
+
+    Behavior by card number last digit:
+    - Odd (1,3,5,7,9) → 200 authorized
+    - Even (2,4,6,8) → 200 declined
+    - Zero (0) → 503 service unavailable
+    - Missing fields → 400 bad request
+  version: 1.0.0
+  contact:
+    name: Bank Simulator (Mountebank)
+
+servers:
+  - url: http://localhost:8080
+    description: Local Docker (docker-compose up)
+
+paths:
+  /payments:
+    post:
+      operationId: authorizePayment
+      summary: Authorize a card payment
+      description: |
+        Submit a card payment for authorization.
+        The simulator responds based on the last digit of card_number.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BankPaymentRequest'
+            examples:
+              authorized:
+                summary: Card ending in odd digit (authorized)
+                value:
+                  card_number: "2222405343248877"
+                  expiry_date: "04/2025"
+                  currency: "GBP"
+                  amount: 100
+                  cvv: "123"
+              declined:
+                summary: Card ending in even digit (declined)
+                value:
+                  card_number: "2222405343248878"
+                  expiry_date: "04/2025"
+                  currency: "GBP"
+                  amount: 100
+                  cvv: "123"
+              error:
+                summary: Card ending in 0 (503 error)
+                value:
+                  card_number: "2222405343248870"
+                  expiry_date: "04/2025"
+                  currency: "GBP"
+                  amount: 100
+                  cvv: "123"
+      responses:
+        '200':
+          description: Payment processed (authorized or declined)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankPaymentResponse'
+              examples:
+                authorized:
+                  summary: Authorized response
+                  value:
+                    authorized: true
+                    authorization_code: "0bb07405-6d44-4b50-a14f-7ae0beff13ad"
+                declined:
+                  summary: Declined response
+                  value:
+                    authorized: false
+                    authorization_code: ""
+        '400':
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankErrorResponse'
+              example:
+                error_message: "Not all required properties were sent in the request"
+        '503':
+          description: Bank service unavailable (card ending in 0)
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Empty body
+
+components:
+  schemas:
+    BankPaymentRequest:
+      type: object
+      required:
+        - card_number
+        - expiry_date
+        - currency
+        - amount
+        - cvv
+      properties:
+        card_number:
+          type: string
+          description: Full card number (14-19 digits)
+          minLength: 14
+          maxLength: 19
+          pattern: '^\d{14,19}$'
+          example: "2222405343248877"
+        expiry_date:
+          type: string
+          description: Card expiry date in MM/YYYY format (zero-padded month)
+          pattern: '^\d{2}/\d{4}$'
+          example: "04/2025"
+        currency:
+          type: string
+          description: ISO 4217 currency code (3 chars)
+          minLength: 3
+          maxLength: 3
+          example: "GBP"
+        amount:
+          type: integer
+          description: Amount in minor currency units (e.g. cents)
+          minimum: 1
+          example: 100
+        cvv:
+          type: string
+          description: Card verification value (3-4 digits)
+          minLength: 3
+          maxLength: 4
+          pattern: '^\d{3,4}$'
+          example: "123"
+
+    BankPaymentResponse:
+      type: object
+      properties:
+        authorized:
+          type: boolean
+          description: Whether the payment was authorized
+          example: true
+        authorization_code:
+          type: string
+          description: UUID authorization code (non-empty when authorized, empty string when declined)
+          example: "0bb07405-6d44-4b50-a14f-7ae0beff13ad"
+
+    BankErrorResponse:
+      type: object
+      properties:
+        error_message:
+          type: string
+          description: Error description
+          example: "Not all required properties were sent in the request"

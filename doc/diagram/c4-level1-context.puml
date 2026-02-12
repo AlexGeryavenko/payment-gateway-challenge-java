@@ -1,0 +1,17 @@
+@startuml C4 Level 1 - Context Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title Payment Gateway - System Context Diagram
+
+Person(merchant, "Merchant", "External system that\nprocesses payments for shoppers")
+
+System(gateway, "Payment Gateway", "Spring Boot 4.0.2 REST API\nJava 25, API-first (OpenAPI)\nValidates payments, forwards to bank,\nstores results in memory\n:8090")
+
+System_Ext(bank, "Acquiring Bank", "Bank Simulator (Mountebank)\nAuthorizes or declines payments\n:8080")
+
+Rel(merchant, gateway, "POST /payment\nGET /payment/{id}", "REST/JSON")
+Rel(gateway, bank, "POST /payments\ncard_number, expiry_date,\ncurrency, amount, cvv", "REST/JSON")
+Rel_Back(gateway, bank, "authorized: true/false\nauthorization_code")
+Rel_Back(merchant, gateway, "Payment result\nor stored payment")
+
+@enduml

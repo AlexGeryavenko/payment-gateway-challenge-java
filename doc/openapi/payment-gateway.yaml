@@ -1,0 +1,320 @@
+openapi: 3.1.0
+info:
+  title: Payment Gateway API
+  description: |
+    Checkout.com Payment Gateway — processes card payments through an acquiring bank
+    and stores results in memory. Merchants can submit payments and retrieve
+    previously made payments by ID.
+  version: 1.0.0
+  contact:
+    name: Checkout.com
+
+servers:
+  - url: http://localhost:8090
+    description: Local development
+
+paths:
+  /payment:
+    post:
+      operationId: processPayment
+      summary: Process a card payment
+      description: |
+        Submit a card payment for processing. The gateway validates the request,
+        forwards it to the acquiring bank, and returns the result.
+
+        Possible outcomes:
+        - **Authorized** (200) — bank approved, payment stored
+        - **Declined** (200) — bank rejected, payment stored
+        - **Rejected** (400) — validation failed, bank NOT called, payment NOT stored
+      tags:
+        - Payments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessPaymentRequest'
+            examples:
+              valid_authorized:
+                summary: Valid card (will be authorized — odd last digit)
+                value:
+                  card_number: "2222405343248877"
+                  expiry_month: 4
+                  expiry_year: 2027
+                  currency: "GBP"
+                  amount: 100
+                  cvv: "123"
+              valid_declined:
+                summary: Valid card (will be declined — even last digit)
+                value:
+                  card_number: "2222405343248878"
+                  expiry_month: 4
+                  expiry_year: 2027
+                  currency: "USD"
+                  amount: 5000
+                  cvv: "456"
+              invalid_card:
+                summary: Invalid card number (too short)
+                value:
+                  card_number: "123456789"
+                  expiry_month: 12
+                  expiry_year: 2030
+                  currency: "EUR"
+                  amount: 100
+                  cvv: "789"
+      responses:
+        '200':
+          description: Payment processed (Authorized or Declined)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessPaymentResponse'
+              examples:
+                authorized:
+                  summary: Authorized
+                  value:
+                    id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    status: "Authorized"
+                    cardNumberLastFour: "8877"
+                    expiryMonth: 4
+                    expiryYear: 2027
+                    currency: "GBP"
+                    amount: 100
+                declined:
+                  summary: Declined
+                  value:
+                    id: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+                    status: "Declined"
+                    cardNumberLastFour: "8878"
+                    expiryMonth: 4
+                    expiryYear: 2027
+                    currency: "USD"
+                    amount: 5000
+        '400':
+          description: Payment rejected (validation failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessPaymentResponse'
+              example:
+                id: null
+                status: "Rejected"
+                cardNumberLastFour: null
+                expiryMonth: 0
+                expiryYear: 0
+                currency: null
+                amount: 0
+        '429':
+          description: Rate limited
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+              description: Seconds until the client should retry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "Rate limit exceeded"
+        '502':
+          description: Bank communication failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "Bank service unavailable"
+
+  /payment/{id}:
+    get:
+      operationId: getPaymentById
+      summary: Retrieve a previously made payment
+      description: |
+        Retrieve details of a previously made payment using its identifier.
+        Helps merchants with reconciliation and reporting needs.
+      tags:
+        - Payments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Payment UUID
+          schema:
+            type: string
+            format: uuid
+            example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+      responses:
+        '200':
+          description: Payment found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentDetailsResponse'
+              example:
+                id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                status: "Authorized"
+                cardNumberLastFour: "8877"
+                expiryMonth: 4
+                expiryYear: 2027
+                currency: "GBP"
+                amount: 100
+        '404':
+          description: Payment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "Payment not found"
+        '429':
+          description: Rate limited
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+              description: Seconds until the client should retry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "Rate limit exceeded"
+
+components:
+  schemas:
+    ProcessPaymentRequest:
+      type: object
+      required:
+        - card_number
+        - expiry_month
+        - expiry_year
+        - currency
+        - amount
+        - cvv
+      properties:
+        card_number:
+          type: string
+          description: Full card number (14-19 digits, numeric only). Never stored or returned.
+          minLength: 14
+          maxLength: 19
+          pattern: '^\d{14,19}$'
+          example: "2222405343248877"
+        expiry_month:
+          type: integer
+          description: Card expiry month (1-12)
+          minimum: 1
+          maximum: 12
+          example: 4
+        expiry_year:
+          type: integer
+          description: Card expiry year. Combined with expiry_month, must be in the future.
+          minimum: 2024
+          example: 2027
+        currency:
+          type: string
+          description: ISO 4217 currency code. Supported values — GBP, USD, EUR
+          enum:
+            - GBP
+            - USD
+            - EUR
+          example: "GBP"
+        amount:
+          type: integer
+          description: Amount in minor currency units (e.g. $10.50 = 1050). Must be positive.
+          minimum: 1
+          example: 100
+        cvv:
+          type: string
+          description: Card verification value (3-4 digits, numeric only). Never stored or returned.
+          minLength: 3
+          maxLength: 4
+          pattern: '^\d{3,4}$'
+          example: "123"
+
+    ProcessPaymentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Payment ID generated by the gateway
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        status:
+          type: string
+          description: Payment outcome
+          enum:
+            - Authorized
+            - Declined
+            - Rejected
+          example: "Authorized"
+        cardNumberLastFour:
+          type: string
+          description: Last 4 digits of the card number (PCI compliant)
+          minLength: 4
+          maxLength: 4
+          pattern: '^\d{4}$'
+          example: "8877"
+        expiryMonth:
+          type: integer
+          description: Card expiry month (1-12)
+          example: 4
+        expiryYear:
+          type: integer
+          description: Card expiry year
+          example: 2027
+        currency:
+          type: string
+          description: ISO 4217 currency code
+          example: "GBP"
+        amount:
+          type: integer
+          description: Amount in minor currency units
+          example: 100
+
+    PaymentDetailsResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Payment ID
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        status:
+          type: string
+          description: Payment status (only Authorized or Declined — Rejected payments are not stored)
+          enum:
+            - Authorized
+            - Declined
+          example: "Authorized"
+        cardNumberLastFour:
+          type: string
+          description: Last 4 digits of the card number (PCI compliant)
+          minLength: 4
+          maxLength: 4
+          pattern: '^\d{4}$'
+          example: "8877"
+        expiryMonth:
+          type: integer
+          description: Card expiry month (1-12)
+          example: 4
+        expiryYear:
+          type: integer
+          description: Card expiry year
+          example: 2027
+        currency:
+          type: string
+          description: ISO 4217 currency code
+          example: "GBP"
+        amount:
+          type: integer
+          description: Amount in minor currency units
+          example: 100
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Error description
+          example: "Payment not found"
