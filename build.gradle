@@ -16,6 +16,8 @@ ext {
     jacksonDatabindNullableVersion = '0.2.6'
     mapstructVersion = '1.5.5.Final'
     micrometerVersion = '1.11.5'
+    micrometerTracingVersion = '1.1.6'
+    otelExporterVersion = '1.25.0'
     logstashEncoderVersion = '7.4'
 }
 
@@ -38,6 +40,8 @@ dependencies {
 
     implementation "org.springframework.boot:spring-boot-starter-actuator:${springBootVersion}"
     implementation "io.micrometer:micrometer-registry-prometheus:${micrometerVersion}"
+    implementation "io.micrometer:micrometer-tracing-bridge-otel:${micrometerTracingVersion}"
+    implementation "io.opentelemetry:opentelemetry-exporter-otlp:${otelExporterVersion}"
     implementation "net.logstash.logback:logstash-logback-encoder:${logstashEncoderVersion}"
 
     implementation "org.mapstruct:mapstruct:${mapstructVersion}"

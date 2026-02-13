@@ -21,5 +21,50 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - BANK_SIMULATOR_URL=http://bank_simulator:8080
+      - MANAGEMENT_OTLP_TRACING_ENDPOINT=http://tempo:4318/v1/traces
     depends_on:
       - bank_simulator
+      - tempo
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:v2.48.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - type: bind
+        source: ./monitoring/prometheus/prometheus.yml
+        target: /etc/prometheus/prometheus.yml
+
+  tempo:
+    container_name: tempo
+    image: grafana/tempo:2.3.1
+    ports:
+      - "3200:3200"
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - type: bind
+        source: ./monitoring/tempo/tempo.yml
+        target: /etc/tempo/tempo.yml
+    command: -config.file=/etc/tempo/tempo.yml
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:10.2.2
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Editor
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    volumes:
+      - type: bind
+        source: ./monitoring/grafana/provisioning
+        target: /etc/grafana/provisioning
+      - type: bind
+        source: ./monitoring/grafana/dashboards
+        target: /etc/grafana/dashboards
+    depends_on:
+      - prometheus
+      - tempo
