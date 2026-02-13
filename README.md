@@ -33,9 +33,9 @@ docker compose up -d          # start bank simulator
 curl -s -X POST http://localhost:8090/payment \
   -H 'Content-Type: application/json' \
   -d '{
-    "card_number": "2222405343248877",
-    "expiry_month": 4,
-    "expiry_year": 2026,
+    "cardNumber": "2222405343248877",
+    "expiryMonth": 4,
+    "expiryYear": 2028,
     "currency": "GBP",
     "amount": 100,
     "cvv": "123"
