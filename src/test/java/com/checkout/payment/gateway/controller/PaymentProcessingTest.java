@@ -36,7 +36,7 @@ class PaymentProcessingTest {
     when(bankApi.authorizePayment(any())).thenReturn(
         new BankPaymentResponse().authorized(true).authorizationCode("auth-123"));
 
-    mvc.perform(MockMvcRequestBuilders.post("/payment")
+    mvc.perform(MockMvcRequestBuilders.post("/v1/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(validPaymentJson()))
         .andExpect(status().isOk())
@@ -54,7 +54,7 @@ class PaymentProcessingTest {
     when(bankApi.authorizePayment(any())).thenReturn(
         new BankPaymentResponse().authorized(false).authorizationCode(""));
 
-    mvc.perform(MockMvcRequestBuilders.post("/payment")
+    mvc.perform(MockMvcRequestBuilders.post("/v1/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(validPaymentJson()))
         .andExpect(status().isOk())
@@ -64,7 +64,7 @@ class PaymentProcessingTest {
 
   @Test
   void postPayment_expiredCard_returns400Rejected() throws Exception {
-    mvc.perform(MockMvcRequestBuilders.post("/payment")
+    mvc.perform(MockMvcRequestBuilders.post("/v1/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(readFixture("/fixtures/expired-card-payment.json")))
         .andExpect(status().isBadRequest())
@@ -78,7 +78,7 @@ class PaymentProcessingTest {
     when(bankApi.authorizePayment(any())).thenReturn(
         new BankPaymentResponse().authorized(true).authorizationCode("auth-456"));
 
-    MvcResult postResult = mvc.perform(MockMvcRequestBuilders.post("/payment")
+    MvcResult postResult = mvc.perform(MockMvcRequestBuilders.post("/v1/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(validPaymentJson()))
         .andExpect(status().isOk())
@@ -87,7 +87,7 @@ class PaymentProcessingTest {
     String responseBody = postResult.getResponse().getContentAsString();
     String id = com.jayway.jsonpath.JsonPath.read(responseBody, "$.id");
 
-    mvc.perform(MockMvcRequestBuilders.get("/payment/" + id))
+    mvc.perform(MockMvcRequestBuilders.get("/v1/payment/" + id))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").value(id))
         .andExpect(jsonPath("$.status").value("Authorized"))
@@ -102,7 +102,7 @@ class PaymentProcessingTest {
   void postPayment_bankError_returns502() throws Exception {
     when(bankApi.authorizePayment(any())).thenThrow(new RestClientException("Service unavailable"));
 
-    mvc.perform(MockMvcRequestBuilders.post("/payment")
+    mvc.perform(MockMvcRequestBuilders.post("/v1/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(validPaymentJson()))
         .andExpect(status().isBadGateway())
@@ -111,7 +111,7 @@ class PaymentProcessingTest {
 
   @Test
   void postPayment_invalidCardNumber_returns400Rejected() throws Exception {
-    mvc.perform(MockMvcRequestBuilders.post("/payment")
+    mvc.perform(MockMvcRequestBuilders.post("/v1/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(readFixture("/fixtures/invalid-card-number-payment.json")))
         .andExpect(status().isBadRequest())
@@ -122,7 +122,7 @@ class PaymentProcessingTest {
 
   @Test
   void postPayment_invalidCurrency_returns400Rejected() throws Exception {
-    mvc.perform(MockMvcRequestBuilders.post("/payment")
+    mvc.perform(MockMvcRequestBuilders.post("/v1/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(readFixture("/fixtures/invalid-currency-payment.json")))
         .andExpect(status().isBadRequest())

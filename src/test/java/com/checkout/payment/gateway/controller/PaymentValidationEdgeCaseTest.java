@@ -129,7 +129,7 @@ class PaymentValidationEdgeCaseTest {
   // --- Helpers ---
 
   private void performPostAndExpectRejected(String json) throws Exception {
-    mvc.perform(MockMvcRequestBuilders.post("/payment")
+    mvc.perform(MockMvcRequestBuilders.post("/v1/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(json))
         .andExpect(status().isBadRequest())

@@ -26,7 +26,7 @@ class RateLimitFilterTest {
 
   @Test
   void allowsRequestsWithinCapacity() throws Exception {
-    MockHttpServletRequest request = new MockHttpServletRequest("POST", "/payment");
+    MockHttpServletRequest request = new MockHttpServletRequest("POST", "/v1/payment");
     MockHttpServletResponse response = new MockHttpServletResponse();
 
     filter.doFilterInternal(request, response, new MockFilterChain());
@@ -37,13 +37,13 @@ class RateLimitFilterTest {
   @Test
   void rejectsRequestsWhenCapacityExhausted() throws Exception {
     for (int i = 0; i < 2; i++) {
-      MockHttpServletRequest request = new MockHttpServletRequest("POST", "/payment");
+      MockHttpServletRequest request = new MockHttpServletRequest("POST", "/v1/payment");
       MockHttpServletResponse response = new MockHttpServletResponse();
       filter.doFilterInternal(request, response, new MockFilterChain());
       assertEquals(200, response.getStatus());
     }
 
-    MockHttpServletRequest request = new MockHttpServletRequest("POST", "/payment");
+    MockHttpServletRequest request = new MockHttpServletRequest("POST", "/v1/payment");
     MockHttpServletResponse response = new MockHttpServletResponse();
     filter.doFilterInternal(request, response, new MockFilterChain());
 
@@ -54,13 +54,13 @@ class RateLimitFilterTest {
   void rejectedResponseIncludesRetryAfterHeader() throws Exception {
     for (int i = 0; i < 2; i++) {
       filter.doFilterInternal(
-          new MockHttpServletRequest("POST", "/payment"),
+          new MockHttpServletRequest("POST", "/v1/payment"),
           new MockHttpServletResponse(), new MockFilterChain());
     }
 
     MockHttpServletResponse response = new MockHttpServletResponse();
     filter.doFilterInternal(
-        new MockHttpServletRequest("POST", "/payment"), response, new MockFilterChain());
+        new MockHttpServletRequest("POST", "/v1/payment"), response, new MockFilterChain());
 
     assertEquals(429, response.getStatus());
     assertNotNull(response.getHeader("Retry-After"));
@@ -71,13 +71,13 @@ class RateLimitFilterTest {
   void rejectedResponseIncludesJsonBody() throws Exception {
     for (int i = 0; i < 2; i++) {
       filter.doFilterInternal(
-          new MockHttpServletRequest("POST", "/payment"),
+          new MockHttpServletRequest("POST", "/v1/payment"),
           new MockHttpServletResponse(), new MockFilterChain());
     }
 
     MockHttpServletResponse response = new MockHttpServletResponse();
     filter.doFilterInternal(
-        new MockHttpServletRequest("POST", "/payment"), response, new MockFilterChain());
+        new MockHttpServletRequest("POST", "/v1/payment"), response, new MockFilterChain());
 
     assertEquals("application/json", response.getContentType());
     assertTrue(response.getContentAsString().contains("Rate limit exceeded"));
@@ -85,7 +85,7 @@ class RateLimitFilterTest {
 
   @Test
   void successfulRequestIncludesRemainingHeader() throws Exception {
-    MockHttpServletRequest request = new MockHttpServletRequest("POST", "/payment");
+    MockHttpServletRequest request = new MockHttpServletRequest("POST", "/v1/payment");
     MockHttpServletResponse response = new MockHttpServletResponse();
 
     filter.doFilterInternal(request, response, new MockFilterChain());
@@ -102,7 +102,7 @@ class RateLimitFilterTest {
 
   @Test
   void shouldFilterPaymentPaths() {
-    MockHttpServletRequest request = new MockHttpServletRequest("GET", "/payment/123");
+    MockHttpServletRequest request = new MockHttpServletRequest("GET", "/v1/payment/123");
     assertTrue(!filter.shouldNotFilter(request));
   }
 
@@ -110,18 +110,18 @@ class RateLimitFilterTest {
   void separateBucketsForDifferentMethods() throws Exception {
     for (int i = 0; i < 2; i++) {
       filter.doFilterInternal(
-          new MockHttpServletRequest("POST", "/payment"),
+          new MockHttpServletRequest("POST", "/v1/payment"),
           new MockHttpServletResponse(), new MockFilterChain());
     }
 
     MockHttpServletResponse postResponse = new MockHttpServletResponse();
     filter.doFilterInternal(
-        new MockHttpServletRequest("POST", "/payment"), postResponse, new MockFilterChain());
+        new MockHttpServletRequest("POST", "/v1/payment"), postResponse, new MockFilterChain());
     assertEquals(429, postResponse.getStatus());
 
     MockHttpServletResponse getResponse = new MockHttpServletResponse();
     filter.doFilterInternal(
-        new MockHttpServletRequest("GET", "/payment/123"), getResponse, new MockFilterChain());
+        new MockHttpServletRequest("GET", "/v1/payment/123"), getResponse, new MockFilterChain());
     assertEquals(200, getResponse.getStatus());
   }
 }

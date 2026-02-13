@@ -31,13 +31,13 @@ public class PaymentGatewayController {
     this.apiMapper = apiMapper;
   }
 
-  @GetMapping("/payment/{id}")
+  @GetMapping("/v1/payment/{id}")
   public ResponseEntity<ProcessPaymentResponse> getPostPaymentEventById(@PathVariable UUID id) {
     Payment payment = getPaymentByIdUseCase.execute(id);
     return new ResponseEntity<>(apiMapper.toProcessResponse(payment), HttpStatus.OK);
   }
 
-  @PostMapping("/payment")
+  @PostMapping("/v1/payment")
   public ResponseEntity<ProcessPaymentResponse> processPayment(
       @Valid @RequestBody ProcessPaymentRequest request) {
     Payment payment = apiMapper.toDomain(request);

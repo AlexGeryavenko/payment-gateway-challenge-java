@@ -39,7 +39,7 @@ class PaymentGatewayControllerCharacterizationTest {
 
     paymentRepository.save(payment);
 
-    mvc.perform(MockMvcRequestBuilders.get("/payment/" + payment.getId()))
+    mvc.perform(MockMvcRequestBuilders.get("/v1/payment/" + payment.getId()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").value(payment.getId().toString()))
         .andExpect(jsonPath("$.status").value("Declined"))
@@ -63,14 +63,14 @@ class PaymentGatewayControllerCharacterizationTest {
 
     paymentRepository.save(payment);
 
-    mvc.perform(MockMvcRequestBuilders.get("/payment/" + payment.getId()))
+    mvc.perform(MockMvcRequestBuilders.get("/v1/payment/" + payment.getId()))
         .andExpect(status().isOk())
         .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON));
   }
 
   @Test
   void getPayment_nonExistentId_returns404() throws Exception {
-    mvc.perform(MockMvcRequestBuilders.get("/payment/" + UUID.randomUUID()))
+    mvc.perform(MockMvcRequestBuilders.get("/v1/payment/" + UUID.randomUUID()))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.message").value("Page not found"));
   }
