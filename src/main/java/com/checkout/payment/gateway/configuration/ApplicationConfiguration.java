@@ -3,7 +3,6 @@ package com.checkout.payment.gateway.configuration;
 import com.checkout.payment.gateway.client.bank.ApiClient;
 import com.checkout.payment.gateway.client.bank.api.DefaultApi;
 import java.time.Clock;
-import java.time.Duration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
@@ -20,10 +19,11 @@ public class ApplicationConfiguration {
   }
 
   @Bean
-  public RestTemplate restTemplate(RestTemplateBuilder builder) {
+  public RestTemplate restTemplate(RestTemplateBuilder builder,
+      BankSimulatorProperties properties) {
     return builder
-        .setConnectTimeout(Duration.ofMillis(10000))
-        .setReadTimeout(Duration.ofMillis(10000))
+        .setConnectTimeout(properties.getConnectTimeout())
+        .setReadTimeout(properties.getReadTimeout())
         .build();
   }
 
@@ -31,7 +31,7 @@ public class ApplicationConfiguration {
   public ApiClient bankApiClient(RestTemplate restTemplate,
       BankSimulatorProperties properties) {
     ApiClient apiClient = new ApiClient(restTemplate);
-    apiClient.setBasePath(properties.getBaseUrl());
+    apiClient.setBasePath(properties.getUrl());
     return apiClient;
   }
 
