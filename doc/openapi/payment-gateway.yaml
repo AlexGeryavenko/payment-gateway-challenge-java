@@ -5,7 +5,7 @@ info:
     Checkout.com Payment Gateway — processes card payments through an acquiring bank
     and stores results in memory. Merchants can submit payments and retrieve
     previously made payments by ID.
-  version: 0.8.0
+  version: 0.9.0
   contact:
     name: Checkout.com
 
