@@ -1,6 +1,6 @@
 package com.checkout.payment.gateway.controller;
 
-import com.checkout.payment.gateway.model.PostPaymentResponse;
+import com.checkout.payment.gateway.api.model.ProcessPaymentResponse;
 import com.checkout.payment.gateway.service.PaymentGatewayService;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -19,7 +19,7 @@ public class PaymentGatewayController {
   }
 
   @GetMapping("/payment/{id}")
-  public ResponseEntity<PostPaymentResponse> getPostPaymentEventById(@PathVariable UUID id) {
+  public ResponseEntity<ProcessPaymentResponse> getPostPaymentEventById(@PathVariable UUID id) {
     return new ResponseEntity<>(paymentGatewayService.getPaymentById(id), HttpStatus.OK);
   }
 }
