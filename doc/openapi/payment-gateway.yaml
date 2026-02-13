@@ -5,7 +5,7 @@ info:
     Checkout.com Payment Gateway — processes card payments through an acquiring bank
     and stores results in memory. Merchants can submit payments and retrieve
     previously made payments by ID.
-  version: 0.5.0
+  version: 0.6.0
   contact:
     name: Checkout.com
 
@@ -23,8 +23,8 @@ paths:
         forwards it to the acquiring bank, and returns the result.
 
         Possible outcomes:
-        - **Authorized** (200) — bank approved, payment stored
-        - **Declined** (200) — bank rejected, payment stored
+        - **Authorized** (201) — bank approved, payment stored
+        - **Declined** (201) — bank rejected, payment stored
         - **Rejected** (400) — validation failed, bank NOT called, payment NOT stored
       tags:
         - Payments
@@ -75,8 +75,13 @@ paths:
                   amount: 100
                   cvv: "789"
       responses:
-        '200':
+        '201':
           description: Payment processed (Authorized or Declined)
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URI of the created payment resource
           content:
             application/json:
               schema:

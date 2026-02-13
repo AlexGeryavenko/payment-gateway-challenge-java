@@ -41,7 +41,7 @@ class IdempotencyTest {
             .contentType(MediaType.APPLICATION_JSON)
             .header("Idempotency-Key", idempotencyKey)
             .content(readFixture("/fixtures/valid-payment.json")))
-        .andExpect(status().isOk())
+        .andExpect(status().isCreated())
         .andExpect(jsonPath("$.status").value("Authorized"))
         .andReturn();
 
@@ -52,7 +52,7 @@ class IdempotencyTest {
             .contentType(MediaType.APPLICATION_JSON)
             .header("Idempotency-Key", idempotencyKey)
             .content(readFixture("/fixtures/valid-payment.json")))
-        .andExpect(status().isOk())
+        .andExpect(status().isCreated())
         .andExpect(jsonPath("$.status").value("Authorized"))
         .andReturn();
 
@@ -71,7 +71,7 @@ class IdempotencyTest {
     mvc.perform(MockMvcRequestBuilders.post("/v1/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(readFixture("/fixtures/valid-payment.json")))
-        .andExpect(status().isOk())
+        .andExpect(status().isCreated())
         .andExpect(jsonPath("$.status").value("Authorized"))
         .andExpect(jsonPath("$.id").exists());
   }
@@ -85,14 +85,14 @@ class IdempotencyTest {
             .contentType(MediaType.APPLICATION_JSON)
             .header("Idempotency-Key", UUID.randomUUID().toString())
             .content(readFixture("/fixtures/valid-payment.json")))
-        .andExpect(status().isOk())
+        .andExpect(status().isCreated())
         .andReturn();
 
     MvcResult secondResult = mvc.perform(MockMvcRequestBuilders.post("/v1/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .header("Idempotency-Key", UUID.randomUUID().toString())
             .content(readFixture("/fixtures/valid-payment.json")))
-        .andExpect(status().isOk())
+        .andExpect(status().isCreated())
         .andReturn();
 
     String firstId = com.jayway.jsonpath.JsonPath

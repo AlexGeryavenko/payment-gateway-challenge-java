@@ -94,7 +94,7 @@ class CircuitBreakerTest {
     mvc.perform(MockMvcRequestBuilders.post("/v1/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(validPaymentJson()))
-        .andExpect(status().isOk())
+        .andExpect(status().isCreated())
         .andExpect(jsonPath("$.status").value("Authorized"));
   }
 

@@ -7,8 +7,8 @@ import com.checkout.payment.gateway.model.Payment;
 import com.checkout.payment.gateway.usecase.GetPaymentByIdUseCase;
 import com.checkout.payment.gateway.usecase.ProcessPaymentUseCase;
 import jakarta.validation.Valid;
+import java.net.URI;
 import java.util.UUID;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,7 +34,7 @@ public class PaymentGatewayController {
   @GetMapping("/v1/payment/{id}")
   public ResponseEntity<ProcessPaymentResponse> getPostPaymentEventById(@PathVariable UUID id) {
     Payment payment = getPaymentByIdUseCase.execute(id);
-    return new ResponseEntity<>(apiMapper.toProcessResponse(payment), HttpStatus.OK);
+    return ResponseEntity.ok(apiMapper.toProcessResponse(payment));
   }
 
   @PostMapping("/v1/payment")
@@ -44,6 +44,7 @@ public class PaymentGatewayController {
     Payment payment = apiMapper.toDomain(request);
     payment.setIdempotencyKey(idempotencyKey);
     Payment result = processPaymentUseCase.execute(payment);
-    return new ResponseEntity<>(apiMapper.toProcessResponse(result), HttpStatus.OK);
+    URI location = URI.create("/v1/payment/" + result.getId());
+    return ResponseEntity.created(location).body(apiMapper.toProcessResponse(result));
   }
 }
