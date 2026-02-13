@@ -1,6 +1,6 @@
 package com.checkout.payment.gateway.exception;
 
-import com.checkout.payment.gateway.model.ErrorResponse;
+import com.checkout.payment.gateway.api.model.ErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -16,7 +16,7 @@ public class CommonExceptionHandler {
   @ExceptionHandler(EventProcessingException.class)
   public ResponseEntity<ErrorResponse> handleException(EventProcessingException ex) {
     LOG.error("Exception happened", ex);
-    return new ResponseEntity<>(new ErrorResponse("Page not found"),
+    return new ResponseEntity<>(new ErrorResponse().message("Page not found"),
         HttpStatus.NOT_FOUND);
   }
 }

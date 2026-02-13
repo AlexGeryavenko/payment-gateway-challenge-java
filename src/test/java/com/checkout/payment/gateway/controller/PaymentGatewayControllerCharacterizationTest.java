@@ -5,8 +5,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.checkout.payment.gateway.enums.PaymentStatus;
-import com.checkout.payment.gateway.model.PostPaymentResponse;
+import com.checkout.payment.gateway.api.model.ProcessPaymentResponse;
+import com.checkout.payment.gateway.api.model.ProcessPaymentResponse.StatusEnum;
 import com.checkout.payment.gateway.repository.PaymentsRepository;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -28,14 +28,14 @@ class PaymentGatewayControllerCharacterizationTest {
 
   @Test
   void getPayment_existingId_returnsAllFieldsIncludingId() throws Exception {
-    PostPaymentResponse payment = new PostPaymentResponse();
+    ProcessPaymentResponse payment = new ProcessPaymentResponse();
     payment.setId(UUID.randomUUID());
     payment.setAmount(500);
     payment.setCurrency("GBP");
-    payment.setStatus(PaymentStatus.DECLINED);
+    payment.setStatus(StatusEnum.DECLINED);
     payment.setExpiryMonth(6);
     payment.setExpiryYear(2025);
-    payment.setCardNumberLastFour(9876);
+    payment.setCardNumberLastFour("9876");
 
     paymentsRepository.add(payment);
 
@@ -43,7 +43,7 @@ class PaymentGatewayControllerCharacterizationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").value(payment.getId().toString()))
         .andExpect(jsonPath("$.status").value("Declined"))
-        .andExpect(jsonPath("$.cardNumberLastFour").value(9876))
+        .andExpect(jsonPath("$.cardNumberLastFour").value("9876"))
         .andExpect(jsonPath("$.expiryMonth").value(6))
         .andExpect(jsonPath("$.expiryYear").value(2025))
         .andExpect(jsonPath("$.currency").value("GBP"))
@@ -52,14 +52,14 @@ class PaymentGatewayControllerCharacterizationTest {
 
   @Test
   void getPayment_existingId_returnsJsonContentType() throws Exception {
-    PostPaymentResponse payment = new PostPaymentResponse();
+    ProcessPaymentResponse payment = new ProcessPaymentResponse();
     payment.setId(UUID.randomUUID());
     payment.setAmount(500);
     payment.setCurrency("GBP");
-    payment.setStatus(PaymentStatus.DECLINED);
+    payment.setStatus(StatusEnum.DECLINED);
     payment.setExpiryMonth(6);
     payment.setExpiryYear(2025);
-    payment.setCardNumberLastFour(9876);
+    payment.setCardNumberLastFour("9876");
 
     paymentsRepository.add(payment);
 
