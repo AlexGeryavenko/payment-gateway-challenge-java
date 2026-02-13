@@ -29,7 +29,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
   @Override
   protected boolean shouldNotFilter(HttpServletRequest request) {
-    return !request.getRequestURI().startsWith("/payment");
+    return !request.getRequestURI().startsWith("/v1/payment");
   }
 
   @Override

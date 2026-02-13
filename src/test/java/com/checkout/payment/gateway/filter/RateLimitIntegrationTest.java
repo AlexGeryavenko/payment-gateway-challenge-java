@@ -41,17 +41,17 @@ class RateLimitIntegrationTest {
 
   @Test
   void returnsRateLimitRemainingHeader() throws Exception {
-    mvc.perform(MockMvcRequestBuilders.get("/payment/00000000-0000-0000-0000-000000000000"))
+    mvc.perform(MockMvcRequestBuilders.get("/v1/payment/00000000-0000-0000-0000-000000000000"))
         .andExpect(header().exists("X-Rate-Limit-Remaining"));
   }
 
   @Test
   void returns429WhenRateLimitExceeded() throws Exception {
     for (int i = 0; i < 3; i++) {
-      mvc.perform(MockMvcRequestBuilders.get("/payment/00000000-0000-0000-0000-000000000000"));
+      mvc.perform(MockMvcRequestBuilders.get("/v1/payment/00000000-0000-0000-0000-000000000000"));
     }
 
-    mvc.perform(MockMvcRequestBuilders.get("/payment/00000000-0000-0000-0000-000000000000"))
+    mvc.perform(MockMvcRequestBuilders.get("/v1/payment/00000000-0000-0000-0000-000000000000"))
         .andExpect(status().isTooManyRequests())
         .andExpect(header().exists("Retry-After"))
         .andExpect(jsonPath("$.message").value("Rate limit exceeded. Try again later."));

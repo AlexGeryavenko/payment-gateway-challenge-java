@@ -60,14 +60,14 @@ class CircuitBreakerTest {
 
     // Send enough failures to trip the circuit (sliding window = 4, threshold = 50%)
     for (int i = 0; i < 4; i++) {
-      mvc.perform(MockMvcRequestBuilders.post("/payment")
+      mvc.perform(MockMvcRequestBuilders.post("/v1/payment")
               .contentType(MediaType.APPLICATION_JSON)
               .content(validPaymentJson()))
           .andExpect(status().isBadGateway());
     }
 
     // Circuit should now be open — next request gets CallNotPermittedException
-    mvc.perform(MockMvcRequestBuilders.post("/payment")
+    mvc.perform(MockMvcRequestBuilders.post("/v1/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(validPaymentJson()))
         .andExpect(status().isBadGateway())
@@ -79,7 +79,7 @@ class CircuitBreakerTest {
     CircuitBreaker cb = circuitBreakerRegistry.circuitBreaker("bankClient");
     cb.transitionToOpenState();
 
-    mvc.perform(MockMvcRequestBuilders.post("/payment")
+    mvc.perform(MockMvcRequestBuilders.post("/v1/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(validPaymentJson()))
         .andExpect(status().isBadGateway())
@@ -91,7 +91,7 @@ class CircuitBreakerTest {
         new com.checkout.payment.gateway.client.bank.model.BankPaymentResponse()
             .authorized(true).authorizationCode("auth-reset"));
 
-    mvc.perform(MockMvcRequestBuilders.post("/payment")
+    mvc.perform(MockMvcRequestBuilders.post("/v1/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(validPaymentJson()))
         .andExpect(status().isOk())
