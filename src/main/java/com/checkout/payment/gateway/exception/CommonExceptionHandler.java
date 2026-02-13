@@ -56,4 +56,12 @@ public class CommonExceptionHandler {
     return new ResponseEntity<>(new ErrorResponse().message("Invalid request parameter"),
         HttpStatus.BAD_REQUEST);
   }
+
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<ErrorResponse> handleUnexpectedException(Exception ex) {
+    LOG.error("Unexpected error occurred", ex);
+    return new ResponseEntity<>(
+        new ErrorResponse().message("An unexpected error occurred. Please try again later."),
+        HttpStatus.INTERNAL_SERVER_ERROR);
+  }
 }
