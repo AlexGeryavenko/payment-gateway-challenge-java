@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.1.5'
     id 'io.spring.dependency-management' version '1.0.15.RELEASE'
+    id 'org.openapi.generator' version '7.2.0'
 }
 
 group = 'com.checkout'
@@ -19,9 +20,55 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
 
+    implementation 'com.google.code.findbugs:jsr305:3.0.2'
+    implementation 'io.swagger.core.v3:swagger-annotations:2.2.19'
+    implementation 'org.openapitools:jackson-databind-nullable:0.2.6'
+
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+tasks.register('generateBankClient', org.openapitools.generator.gradle.plugin.tasks.GenerateTask) {
+    generatorName = 'java'
+    inputSpec = "$projectDir/doc/openapi/bank-simulator.yaml"
+    outputDir = "$buildDir/generated/bank-client"
+    apiPackage = 'com.checkout.payment.gateway.client.bank.api'
+    modelPackage = 'com.checkout.payment.gateway.client.bank.model'
+    configOptions = [
+        library             : 'resttemplate',
+        useJakartaEe        : 'true',
+        openApiNullable     : 'false',
+        dateLibrary         : 'java8',
+        serializationLibrary: 'jackson'
+    ]
+}
+
+tasks.register('generatePaymentApi', org.openapitools.generator.gradle.plugin.tasks.GenerateTask) {
+    generatorName = 'spring'
+    inputSpec = "$projectDir/doc/openapi/payment-gateway.yaml"
+    outputDir = "$buildDir/generated/payment-api"
+    apiPackage = 'com.checkout.payment.gateway.api'
+    modelPackage = 'com.checkout.payment.gateway.api.model'
+    configOptions = [
+        interfaceOnly       : 'true',
+        useSpringBoot3      : 'true',
+        useTags             : 'true',
+        openApiNullable     : 'false',
+        dateLibrary         : 'java8',
+        skipDefaultInterface: 'true'
+    ]
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir "$buildDir/generated/bank-client/src/main/java"
+            srcDir "$buildDir/generated/payment-api/src/main/java"
+        }
+    }
+}
+
+compileJava.dependsOn generateBankClient, generatePaymentApi

@@ -14,7 +14,7 @@ servers:
     description: Local development
 
 paths:
-  /payment:
+  /v1/payment:
     post:
       operationId: processPayment
       summary: Process a card payment
@@ -38,27 +38,27 @@ paths:
               valid_authorized:
                 summary: Valid card (will be authorized — odd last digit)
                 value:
-                  card_number: "2222405343248877"
-                  expiry_month: 4
-                  expiry_year: 2027
+                  cardNumber: "2222405343248877"
+                  expiryMonth: 4
+                  expiryYear: 2027
                   currency: "GBP"
                   amount: 100
                   cvv: "123"
               valid_declined:
                 summary: Valid card (will be declined — even last digit)
                 value:
-                  card_number: "2222405343248878"
-                  expiry_month: 4
-                  expiry_year: 2027
+                  cardNumber: "2222405343248878"
+                  expiryMonth: 4
+                  expiryYear: 2027
                   currency: "USD"
                   amount: 5000
                   cvv: "456"
               invalid_card:
                 summary: Invalid card number (too short)
                 value:
-                  card_number: "123456789"
-                  expiry_month: 12
-                  expiry_year: 2030
+                  cardNumber: "123456789"
+                  expiryMonth: 12
+                  expiryYear: 2030
                   currency: "EUR"
                   amount: 100
                   cvv: "789"
@@ -126,7 +126,7 @@ paths:
               example:
                 message: "Bank service unavailable"
 
-  /payment/{id}:
+  /v1/payment/{id}:
     get:
       operationId: getPaymentById
       summary: Retrieve a previously made payment
@@ -186,29 +186,29 @@ components:
     ProcessPaymentRequest:
       type: object
       required:
-        - card_number
-        - expiry_month
-        - expiry_year
+        - cardNumber
+        - expiryMonth
+        - expiryYear
         - currency
         - amount
         - cvv
       properties:
-        card_number:
+        cardNumber:
           type: string
           description: Full card number (14-19 digits, numeric only). Never stored or returned.
           minLength: 14
           maxLength: 19
           pattern: '^\d{14,19}$'
           example: "2222405343248877"
-        expiry_month:
+        expiryMonth:
           type: integer
           description: Card expiry month (1-12)
           minimum: 1
           maximum: 12
           example: 4
-        expiry_year:
+        expiryYear:
           type: integer
-          description: Card expiry year. Combined with expiry_month, must be in the future.
+          description: Card expiry year. Combined with expiryMonth, must be in the future.
           minimum: 2024
           example: 2027
         currency:
