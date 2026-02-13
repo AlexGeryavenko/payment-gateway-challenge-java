@@ -28,7 +28,8 @@ import org.springframework.web.client.RestClientException;
     "resilience4j.circuitbreaker.instances.bankClient.sliding-window-size=4",
     "resilience4j.circuitbreaker.instances.bankClient.failure-rate-threshold=50",
     "resilience4j.circuitbreaker.instances.bankClient.wait-duration-in-open-state=60s",
-    "resilience4j.circuitbreaker.instances.bankClient.permitted-number-of-calls-in-half-open-state=1",
+    "resilience4j.circuitbreaker.instances.bankClient"
+        + ".permitted-number-of-calls-in-half-open-state=1",
     "rate-limit.post.capacity=1000",
     "rate-limit.post.refill-rate=1000"
 })

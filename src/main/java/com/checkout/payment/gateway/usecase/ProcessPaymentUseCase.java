@@ -42,8 +42,10 @@ public class ProcessPaymentUseCase {
 
   private Payment doExecute(Payment payment) {
     try {
-      boolean valid = Observation.createNotStarted("validate-payment", observationRegistry)
+      Boolean validResult = Observation
+          .createNotStarted("validate-payment", observationRegistry)
           .observe(() -> paymentValidator.isValid(payment));
+      boolean valid = Boolean.TRUE.equals(validResult);
 
       if (!valid) {
         LOG.info("Payment rejected — validation failed");
@@ -60,7 +62,8 @@ public class ProcessPaymentUseCase {
           payment.getCardNumber().substring(payment.getCardNumber().length() - 4));
 
       LOG.info("Requesting bank authorization");
-      PaymentStatus status = Observation.createNotStarted("bank-authorize", observationRegistry)
+      PaymentStatus bankResult = Observation
+          .createNotStarted("bank-authorize", observationRegistry)
           .observe(() -> {
             try {
               return paymentMetrics.recordBankCallDuration(
@@ -71,6 +74,7 @@ public class ProcessPaymentUseCase {
               throw new RuntimeException(e);
             }
           });
+      PaymentStatus status = bankResult != null ? bankResult : PaymentStatus.DECLINED;
       payment.setStatus(status);
 
       LOG.info("Payment {} — status={}", payment.getId(), status);

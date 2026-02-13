@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+  <!-- Exclude generated code -->
+  <Match>
+    <Package name="~com\.checkout\.payment\.gateway\.client\.bank(\..*)?"/>
+  </Match>
+  <Match>
+    <Package name="~com\.checkout\.payment\.gateway\.api(\..*)?"/>
+  </Match>
+  <Match>
+    <Package name="~org\.openapitools(\..*)?"/>
+  </Match>
+  <Match>
+    <Class name="~.*MapperImpl"/>
+  </Match>
+
+  <!-- Suppress EI_EXPOSE_REP / EI_EXPOSE_REP2 on domain & config classes -->
+  <Match>
+    <Or>
+      <Class name="com.checkout.payment.gateway.model.Payment"/>
+      <Class name="com.checkout.payment.gateway.entity.PaymentEntity"/>
+      <Class name="com.checkout.payment.gateway.configuration.BankSimulatorProperties"/>
+      <Class name="com.checkout.payment.gateway.configuration.RateLimitProperties"/>
+      <Class name="com.checkout.payment.gateway.client.BankPaymentAdapter"/>
+      <Class name="com.checkout.payment.gateway.filter.RateLimitFilter"/>
+      <Class name="com.checkout.payment.gateway.metrics.PaymentMetrics"/>
+      <Class name="com.checkout.payment.gateway.usecase.ProcessPaymentUseCase"/>
+      <Class name="com.checkout.payment.gateway.usecase.GetPaymentByIdUseCase"/>
+    </Or>
+    <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+  </Match>
+</FindBugsFilter>
