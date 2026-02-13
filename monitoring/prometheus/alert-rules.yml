@@ -1,0 +1,56 @@
+groups:
+  - name: payment-gateway
+    rules:
+      - alert: HighBankErrorRate
+        expr: >
+          rate(http_server_requests_seconds_count{status="502",application="payment-gateway"}[2m])
+          / rate(bank_authorization_duration_seconds_count{application="payment-gateway"}[2m]) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Bank error rate exceeds 5%"
+          description: "More than 5% of bank authorization calls are failing (502 responses)."
+
+      - alert: HighRejectionRate
+        expr: >
+          rate(payment_processed_total{status="REJECTED",application="payment-gateway"}[5m])
+          / rate(payment_processed_total{application="payment-gateway"}[5m]) > 0.3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Payment rejection rate exceeds 30%"
+          description: "More than 30% of payments are being rejected (validation failures)."
+
+      - alert: HighLatency
+        expr: >
+          histogram_quantile(0.99, rate(http_server_requests_seconds_bucket{application="payment-gateway"}[3m])) > 5
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p99 latency exceeds 5s"
+          description: "99th percentile HTTP request latency is above 5 seconds."
+
+      - alert: HighErrorRate
+        expr: >
+          rate(http_server_requests_seconds_count{status=~"5..",application="payment-gateway"}[2m])
+          / rate(http_server_requests_seconds_count{application="payment-gateway"}[2m]) > 0.01
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "HTTP 5xx error rate exceeds 1%"
+          description: "More than 1% of HTTP responses are 5xx server errors."
+
+      - alert: HighHeapUsage
+        expr: >
+          sum(jvm_memory_used_bytes{area="heap",application="payment-gateway"})
+          / sum(jvm_memory_max_bytes{area="heap",application="payment-gateway"}) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "JVM heap usage exceeds 85%"
+          description: "JVM heap memory utilization is above 85%."
