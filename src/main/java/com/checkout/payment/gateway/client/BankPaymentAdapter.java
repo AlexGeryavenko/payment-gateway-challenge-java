@@ -6,6 +6,7 @@ import com.checkout.payment.gateway.client.bank.model.BankPaymentResponse;
 import com.checkout.payment.gateway.exception.BankCommunicationException;
 import com.checkout.payment.gateway.model.Payment;
 import com.checkout.payment.gateway.model.PaymentStatus;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -17,6 +18,7 @@ public class BankPaymentAdapter {
     this.bankApi = bankApi;
   }
 
+  @CircuitBreaker(name = "bankClient")
   public PaymentStatus authorize(Payment payment) {
     BankPaymentRequest request = new BankPaymentRequest()
         .cardNumber(payment.getCardNumber())
