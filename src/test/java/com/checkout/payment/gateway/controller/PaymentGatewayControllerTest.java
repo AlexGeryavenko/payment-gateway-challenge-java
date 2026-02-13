@@ -4,9 +4,9 @@ package com.checkout.payment.gateway.controller;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.checkout.payment.gateway.api.model.ProcessPaymentResponse;
-import com.checkout.payment.gateway.api.model.ProcessPaymentResponse.StatusEnum;
-import com.checkout.payment.gateway.repository.PaymentsRepository;
+import com.checkout.payment.gateway.model.Payment;
+import com.checkout.payment.gateway.model.PaymentStatus;
+import com.checkout.payment.gateway.repository.PaymentRepository;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,24 +23,24 @@ class PaymentGatewayControllerTest {
   @Autowired
   private MockMvc mvc;
   @Autowired
-  PaymentsRepository paymentsRepository;
+  PaymentRepository paymentRepository;
 
   @Test
   void whenPaymentWithIdExistThenCorrectPaymentIsReturned() throws Exception {
-    ProcessPaymentResponse payment = new ProcessPaymentResponse();
+    Payment payment = new Payment();
     payment.setId(UUID.randomUUID());
-    payment.setAmount(10);
-    payment.setCurrency("USD");
-    payment.setStatus(StatusEnum.AUTHORIZED);
+    payment.setStatus(PaymentStatus.AUTHORIZED);
+    payment.setCardNumberLastFour("4321");
     payment.setExpiryMonth(12);
     payment.setExpiryYear(2024);
-    payment.setCardNumberLastFour("4321");
+    payment.setCurrency("USD");
+    payment.setAmount(10);
 
-    paymentsRepository.add(payment);
+    paymentRepository.save(payment);
 
     mvc.perform(MockMvcRequestBuilders.get("/payment/" + payment.getId()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.status").value(payment.getStatus().getValue()))
+        .andExpect(jsonPath("$.status").value("Authorized"))
         .andExpect(jsonPath("$.cardNumberLastFour").value(payment.getCardNumberLastFour()))
         .andExpect(jsonPath("$.expiryMonth").value(payment.getExpiryMonth()))
         .andExpect(jsonPath("$.expiryYear").value(payment.getExpiryYear()))

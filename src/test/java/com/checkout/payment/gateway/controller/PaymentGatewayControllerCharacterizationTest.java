@@ -5,9 +5,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.checkout.payment.gateway.api.model.ProcessPaymentResponse;
-import com.checkout.payment.gateway.api.model.ProcessPaymentResponse.StatusEnum;
-import com.checkout.payment.gateway.repository.PaymentsRepository;
+import com.checkout.payment.gateway.model.Payment;
+import com.checkout.payment.gateway.model.PaymentStatus;
+import com.checkout.payment.gateway.repository.PaymentRepository;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,20 +24,20 @@ class PaymentGatewayControllerCharacterizationTest {
   private MockMvc mvc;
 
   @Autowired
-  private PaymentsRepository paymentsRepository;
+  private PaymentRepository paymentRepository;
 
   @Test
   void getPayment_existingId_returnsAllFieldsIncludingId() throws Exception {
-    ProcessPaymentResponse payment = new ProcessPaymentResponse();
+    Payment payment = new Payment();
     payment.setId(UUID.randomUUID());
     payment.setAmount(500);
     payment.setCurrency("GBP");
-    payment.setStatus(StatusEnum.DECLINED);
+    payment.setStatus(PaymentStatus.DECLINED);
     payment.setExpiryMonth(6);
     payment.setExpiryYear(2025);
     payment.setCardNumberLastFour("9876");
 
-    paymentsRepository.add(payment);
+    paymentRepository.save(payment);
 
     mvc.perform(MockMvcRequestBuilders.get("/payment/" + payment.getId()))
         .andExpect(status().isOk())
@@ -52,16 +52,16 @@ class PaymentGatewayControllerCharacterizationTest {
 
   @Test
   void getPayment_existingId_returnsJsonContentType() throws Exception {
-    ProcessPaymentResponse payment = new ProcessPaymentResponse();
+    Payment payment = new Payment();
     payment.setId(UUID.randomUUID());
     payment.setAmount(500);
     payment.setCurrency("GBP");
-    payment.setStatus(StatusEnum.DECLINED);
+    payment.setStatus(PaymentStatus.DECLINED);
     payment.setExpiryMonth(6);
     payment.setExpiryYear(2025);
     payment.setCardNumberLastFour("9876");
 
-    paymentsRepository.add(payment);
+    paymentRepository.save(payment);
 
     mvc.perform(MockMvcRequestBuilders.get("/payment/" + payment.getId()))
         .andExpect(status().isOk())
