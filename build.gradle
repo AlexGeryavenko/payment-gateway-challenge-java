@@ -6,7 +6,16 @@ plugins {
 }
 
 group = 'com.checkout'
-version = '0.0.0'
+version = '0.1.0'
+
+ext {
+    springBootVersion = '3.1.5'
+    springdocVersion = '2.2.0'
+    jsr305Version = '3.0.2'
+    swaggerAnnotationsVersion = '2.2.19'
+    jacksonDatabindNullableVersion = '0.2.6'
+    mapstructVersion = '1.5.5.Final'
+}
 
 java {
     sourceCompatibility = '17'
@@ -17,18 +26,18 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
+    implementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
+    implementation "org.springframework.boot:spring-boot-starter-validation:${springBootVersion}"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
 
-    implementation 'com.google.code.findbugs:jsr305:3.0.2'
-    implementation 'io.swagger.core.v3:swagger-annotations:2.2.19'
-    implementation 'org.openapitools:jackson-databind-nullable:0.2.6'
+    implementation "com.google.code.findbugs:jsr305:${jsr305Version}"
+    implementation "io.swagger.core.v3:swagger-annotations:${swaggerAnnotationsVersion}"
+    implementation "org.openapitools:jackson-databind-nullable:${jacksonDatabindNullableVersion}"
 
-    implementation 'org.mapstruct:mapstruct:1.5.5.Final'
-    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+    implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+    annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
 
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
 }
 
 tasks.named('test') {
