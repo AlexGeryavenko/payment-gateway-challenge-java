@@ -5,7 +5,7 @@ info:
     Checkout.com Payment Gateway — processes card payments through an acquiring bank
     and stores results in memory. Merchants can submit payments and retrieve
     previously made payments by ID.
-  version: 1.0.1
+  version: 1.0.2
   contact:
     name: Checkout.com
 
@@ -59,7 +59,7 @@ paths:
               valid_declined:
                 summary: Valid card (will be declined — even last digit)
                 value:
-                  cardNumber: "2222405343248878"
+                  cardNumber: "2222405343248828"
                   expiryMonth: 4
                   expiryYear: 2028
                   currency: "USD"
@@ -102,7 +102,7 @@ paths:
                   value:
                     id: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
                     status: "Declined"
-                    cardNumberLastFour: "8878"
+                    cardNumberLastFour: "8828"
                     expiryMonth: 4
                     expiryYear: 2028
                     currency: "USD"

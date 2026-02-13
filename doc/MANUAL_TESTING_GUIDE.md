@@ -165,7 +165,7 @@ Card numbers ending in an **even digit** (2, 4, 6, 8) are declined by the bank.
 curl -s -X POST http://localhost:8090/v1/payment \
   -H 'Content-Type: application/json' \
   -d '{
-    "cardNumber": "2222405343248878",
+    "cardNumber": "2222405343248828",
     "expiryMonth": 4,
     "expiryYear": 2027,
     "currency": "USD",
@@ -180,7 +180,7 @@ curl -s -X POST http://localhost:8090/v1/payment \
 {
   "id": "<uuid>",
   "status": "Declined",
-  "cardNumberLastFour": "8878",
+  "cardNumberLastFour": "8828",
   "expiryMonth": 4,
   "expiryYear": 2027,
   "currency": "USD",
@@ -675,7 +675,7 @@ curl -s -w "\nHTTP Status: %{http_code}\n" \
   -X POST http://localhost:8090/v1/payment \
   -H 'Content-Type: application/json' \
   -d '{
-    "cardNumber": "2222405343248870",
+    "cardNumber": "2222405343248810",
     "expiryMonth": 4,
     "expiryYear": 2027,
     "currency": "GBP",
@@ -802,7 +802,7 @@ for i in 1 2 3 4; do
     -X POST http://localhost:8090/v1/payment \
     -H 'Content-Type: application/json' \
     -d '{
-      "cardNumber": "2222405343248870",
+      "cardNumber": "2222405343248810",
       "expiryMonth": 4,
       "expiryYear": 2027,
       "currency": "GBP",
