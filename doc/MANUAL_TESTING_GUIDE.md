@@ -33,7 +33,11 @@ This guide walks through starting the Payment Gateway locally and manually testi
    - 5.12 [Missing Required Fields](#512-missing-required-fields)
    - 5.13 [Empty JSON Body](#513-empty-json-body)
    - 5.14 [Malformed JSON](#514-malformed-json)
+   - 5.15 [Luhn-Invalid Card Number](#515-luhn-invalid-card-number)
 6. [Non-Functional Requirements](#6-non-functional-requirements)
+   - 6.0 [Idempotency](#60-idempotency)
+   - 6.0.1 [Retry with Exponential Backoff](#601-retry-with-exponential-backoff)
+   - 6.0.2 [Correlation ID in Error Bodies](#602-correlation-id-in-error-bodies)
    - 6.1 [Rate Limiting](#61-rate-limiting)
    - 6.2 [Circuit Breaker](#62-circuit-breaker)
    - 6.3 [Correlation ID](#63-correlation-id)
@@ -124,7 +128,7 @@ curl -s -X POST http://localhost:8090/v1/payment \
   }' | jq .
 ```
 
-**Expected:** HTTP 200
+**Expected:** HTTP 201
 
 ```json
 {
@@ -170,7 +174,7 @@ curl -s -X POST http://localhost:8090/v1/payment \
   }' | jq .
 ```
 
-**Expected:** HTTP 200
+**Expected:** HTTP 201
 
 ```json
 {
@@ -577,9 +581,130 @@ curl -s -w "\nHTTP Status: %{http_code}\n" \
 ```
 **Expected:** HTTP 400 with `errors[0].field = "requestBody"` and `errors[0].message = "Malformed JSON request body"`.
 
+### 5.15 Luhn-Invalid Card Number
+
+A card number with valid length but failing the Luhn checksum is rejected before contacting the bank.
+
+```bash
+curl -s -w "\nHTTP Status: %{http_code}\n" \
+  -X POST http://localhost:8090/v1/payment \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "cardNumber": "11111111111111",
+    "expiryMonth": 4,
+    "expiryYear": 2027,
+    "currency": "GBP",
+    "amount": 100,
+    "cvv": "123"
+  }'
+```
+
+**Expected:** HTTP 400 with `errors[0].field = "cardNumber"` and `errors[0].message = "Card number failed Luhn check"`.
+
 ---
 
 ## 6. Non-Functional Requirements
+
+### 6.0 Idempotency
+
+POST requests support an optional `Idempotency-Key` header. When provided, duplicate requests return the cached response.
+
+**Test: First request processes normally**
+
+```bash
+IDEM_KEY=$(uuidgen)
+curl -s -w "\nHTTP Status: %{http_code}\n" \
+  -X POST http://localhost:8090/v1/payment \
+  -H 'Content-Type: application/json' \
+  -H "Idempotency-Key: $IDEM_KEY" \
+  -d '{
+    "cardNumber": "2222405343248877",
+    "expiryMonth": 4,
+    "expiryYear": 2027,
+    "currency": "GBP",
+    "amount": 100,
+    "cvv": "123"
+  }' | jq .
+```
+
+**Expected:** HTTP 201 with `status: "Authorized"`.
+
+**Test: Same key returns cached response (no duplicate bank call)**
+
+```bash
+curl -s -w "\nHTTP Status: %{http_code}\n" \
+  -X POST http://localhost:8090/v1/payment \
+  -H 'Content-Type: application/json' \
+  -H "Idempotency-Key: $IDEM_KEY" \
+  -d '{
+    "cardNumber": "2222405343248877",
+    "expiryMonth": 4,
+    "expiryYear": 2027,
+    "currency": "GBP",
+    "amount": 100,
+    "cvv": "123"
+  }' | jq .
+```
+
+**Expected:** HTTP 201 with the **same `id`** as the first request.
+
+**Test: Without idempotency key, processes normally**
+
+```bash
+curl -s -w "\nHTTP Status: %{http_code}\n" \
+  -X POST http://localhost:8090/v1/payment \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "cardNumber": "2222405343248877",
+    "expiryMonth": 4,
+    "expiryYear": 2027,
+    "currency": "GBP",
+    "amount": 100,
+    "cvv": "123"
+  }' | jq .
+```
+
+**Expected:** HTTP 201 with a new unique `id`.
+
+### 6.0.1 Retry with Exponential Backoff
+
+Bank calls are retried up to 3 times with exponential backoff before returning 502. To test, use card ending in `0` which triggers a bank 503:
+
+```bash
+curl -s -w "\nHTTP Status: %{http_code}\n" \
+  -X POST http://localhost:8090/v1/payment \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "cardNumber": "2222405343248870",
+    "expiryMonth": 4,
+    "expiryYear": 2027,
+    "currency": "GBP",
+    "amount": 100,
+    "cvv": "123"
+  }'
+```
+
+**Expected:** HTTP 502 after ~3.5 seconds (3 attempts with 500ms + 1000ms + 2000ms backoff). Check application logs for 3 retry attempts.
+
+### 6.0.2 Correlation ID in Error Bodies
+
+Non-validation error responses now include `correlationId` and `timestamp` in the body.
+
+```bash
+curl -s http://localhost:8090/v1/payment/00000000-0000-0000-0000-000000000000 | jq .
+```
+
+**Expected:** HTTP 404 with:
+
+```json
+{
+  "message": "Page not found",
+  "correlationId": "<uuid>",
+  "timestamp": "<iso-8601>"
+}
+```
+
+The `correlationId` matches the `X-Correlation-Id` response header.
 
 ### 6.1 Rate Limiting
 
@@ -612,7 +737,7 @@ for i in 1 2 3 4 5; do
 done
 ```
 
-**Expected:** First 3 return HTTP 200; requests 4-5 return HTTP 429 with:
+**Expected:** First 3 return HTTP 201; requests 4-5 return HTTP 429 with:
 
 ```json
 {
@@ -862,8 +987,8 @@ docker compose down -v
 
 | Last Digit | Bank Response | Gateway Status | HTTP Code |
 |------------|--------------|----------------|-----------|
-| 1, 3, 5, 7, 9 | `authorized: true` | `Authorized` | 200 |
-| 2, 4, 6, 8 | `authorized: false` | `Declined` | 200 |
+| 1, 3, 5, 7, 9 | `authorized: true` | `Authorized` | 201 |
+| 2, 4, 6, 8 | `authorized: false` | `Declined` | 201 |
 | 0 | 503 error | Bank error | 502 |
 
 ## Quick Reference: Supported Currencies
@@ -874,7 +999,7 @@ docker compose down -v
 
 | Field | Type | Rules |
 |-------|------|-------|
-| `cardNumber` | String | Required. 14-19 numeric digits only (`^\d{14,19}$`) |
+| `cardNumber` | String | Required. 14-19 numeric digits only (`^\d{14,19}$`). Must pass Luhn check. |
 | `expiryMonth` | Integer | Required. 1-12 |
 | `expiryYear` | Integer | Required. >= 2024, must be in the future with `expiryMonth` |
 | `currency` | String | Required. One of: `GBP`, `USD`, `EUR` |
