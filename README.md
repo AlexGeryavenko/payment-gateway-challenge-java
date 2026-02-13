@@ -1,25 +1,77 @@
-# Instructions for candidates
+# Payment Gateway
 
-This is the Java version of the Payment Gateway challenge. If you haven't already read this [README.md](https://github.com/cko-recruitment/) on the details of this exercise, please do so now.
+Spring Boot REST API that sits between merchants and an acquiring bank. Merchants submit card payments; the gateway validates, forwards to the bank, and stores results.
 
-## Requirements
+## Getting Started
+
+### Prerequisites
+
 - JDK 17
 - Docker
 
-## Template structure
+### Run
 
-src/ - A skeleton SpringBoot Application
+```bash
+docker compose up -d          # start bank simulator
+./gradlew bootRun             # start gateway on :8090
+./gradlew test                # run tests
+./gradlew build               # compile + test
+```
 
-test/ - Some simple JUnit tests
+## API Endpoints
 
-imposters/ - contains the bank simulator configuration. Don't change this
+| Method | Path            | Success | Error    | Description            |
+|--------|-----------------|---------|----------|------------------------|
+| POST   | `/payment`      | 200     | 400, 502 | Process a card payment |
+| GET    | `/payment/{id}` | 200     | 404      | Retrieve payment by ID |
 
-.editorconfig - don't change this. It ensures a consistent set of rules for submissions when reformatting code
+### Examples
 
-docker-compose.yml - configures the bank simulator
+**Process a payment:**
 
+```bash
+curl -s -X POST http://localhost:8090/payment \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "card_number": "2222405343248877",
+    "expiry_month": 4,
+    "expiry_year": 2026,
+    "currency": "GBP",
+    "amount": 100,
+    "cvv": "123"
+  }'
+```
+
+**Retrieve a payment:**
+
+```bash
+curl -s http://localhost:8090/payment/{id}
+```
+
+## Configuration
+
+| Property                          | Default                 | Description            |
+|-----------------------------------|-------------------------|------------------------|
+| `server.port`                     | `8090`                  | Gateway HTTP port      |
+| `bank.simulator.url`              | `http://localhost:8080` | Bank simulator base URL |
+| `bank.simulator.connect-timeout`  | `10s`                   | Connection timeout     |
+| `bank.simulator.read-timeout`     | `10s`                   | Read timeout           |
+
+## Bank Simulator
+
+The bank simulator (Mountebank) runs on port 8080 and decides authorization based on the last digit of the card number:
+
+- **Odd digit** (1, 3, 5, 7, 9) — authorized
+- **Even digit** (2, 4, 6, 8) — declined
+- **Zero** (0) — 503 error
 
 ## API Documentation
-For documentation openAPI is included, and it can be found under the following url: **http://localhost:8090/swagger-ui/index.html**
 
-**Feel free to change the structure of the solution, use a different library etc.**
+Swagger UI: http://localhost:8090/swagger-ui/index.html
+
+## Documentation
+
+- [Implementation Plan](doc/PLAN.md)
+- [Payment Gateway OpenAPI Spec](doc/openapi/payment-gateway.yaml)
+- [Bank Simulator OpenAPI Spec](doc/openapi/bank-simulator.yaml)
+- [C4 Architecture Diagrams](doc/diagram/)
