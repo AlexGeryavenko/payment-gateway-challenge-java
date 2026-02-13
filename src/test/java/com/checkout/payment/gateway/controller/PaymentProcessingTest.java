@@ -32,14 +32,14 @@ class PaymentProcessingTest {
   private DefaultApi bankApi;
 
   @Test
-  void postPayment_authorizedCard_returns200Authorized() throws Exception {
+  void postPayment_authorizedCard_returns201Authorized() throws Exception {
     when(bankApi.authorizePayment(any())).thenReturn(
         new BankPaymentResponse().authorized(true).authorizationCode("auth-123"));
 
     mvc.perform(MockMvcRequestBuilders.post("/v1/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(validPaymentJson()))
-        .andExpect(status().isOk())
+        .andExpect(status().isCreated())
         .andExpect(jsonPath("$.status").value("Authorized"))
         .andExpect(jsonPath("$.id").exists())
         .andExpect(jsonPath("$.cardNumberLastFour").value("8877"))
@@ -50,14 +50,14 @@ class PaymentProcessingTest {
   }
 
   @Test
-  void postPayment_declinedCard_returns200Declined() throws Exception {
+  void postPayment_declinedCard_returns201Declined() throws Exception {
     when(bankApi.authorizePayment(any())).thenReturn(
         new BankPaymentResponse().authorized(false).authorizationCode(""));
 
     mvc.perform(MockMvcRequestBuilders.post("/v1/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(validPaymentJson()))
-        .andExpect(status().isOk())
+        .andExpect(status().isCreated())
         .andExpect(jsonPath("$.status").value("Declined"))
         .andExpect(jsonPath("$.id").exists());
   }
@@ -85,7 +85,7 @@ class PaymentProcessingTest {
     MvcResult postResult = mvc.perform(MockMvcRequestBuilders.post("/v1/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(validPaymentJson()))
-        .andExpect(status().isOk())
+        .andExpect(status().isCreated())
         .andReturn();
 
     String responseBody = postResult.getResponse().getContentAsString();
