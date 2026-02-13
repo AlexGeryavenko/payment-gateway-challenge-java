@@ -36,7 +36,7 @@ docker compose up -d          # start all services
 
 | Method | Path | Success | Error | Description |
 |--------|------|---------|-------|-------------|
-| POST | `/v1/payment` | 200 | 400, 429, 502 | Process a card payment |
+| POST | `/v1/payment` | 201 | 400, 429, 502 | Process a card payment |
 | GET | `/v1/payment/{id}` | 200 | 404, 429 | Retrieve payment by ID |
 
 ### Examples
@@ -46,6 +46,7 @@ docker compose up -d          # start all services
 ```bash
 curl -s -X POST http://localhost:8090/v1/payment \
   -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: 550e8400-e29b-41d4-a716-446655440000' \
   -d '{
     "cardNumber": "2222405343248877",
     "expiryMonth": 4,
@@ -62,6 +63,29 @@ curl -s -X POST http://localhost:8090/v1/payment \
 curl -s http://localhost:8090/v1/payment/{id}
 ```
 
+### Idempotency
+
+POST requests support an optional `Idempotency-Key` header (UUID). When provided:
+
+- First request: processes normally and stores the result
+- Subsequent requests with the same key: returns the cached response without calling the bank
+
+This prevents double charges when clients retry timed-out requests. The key is optional — requests without it are processed normally.
+
+```bash
+# Safe to retry — same key returns same result
+curl -s -X POST http://localhost:8090/v1/payment \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: 550e8400-e29b-41d4-a716-446655440000' \
+  -d '{ ... }'
+```
+
+### Validation
+
+Card numbers must pass the Luhn checksum in addition to format validation (14-19 digits). Invalid Luhn numbers are rejected with `400 Bad Request` before contacting the bank.
+
+See [Error Reference](doc/ERROR_REFERENCE.md) for the complete list of validation rules and error responses.
+
 ### Validation Errors (400)
 
 All validation failures return a `ValidationErrorResponse` with field-level error details:
@@ -71,16 +95,30 @@ All validation failures return a `ValidationErrorResponse` with field-level erro
   "status": "Rejected",
   "message": "Validation failed",
   "errors": [
-    { "field": "cardNumber", "message": "size must be between 14 and 19" },
-    { "field": "cvv", "message": "must match \"^\\d{3,4}$\"" }
+    { "field": "cardNumber", "message": "Card number failed Luhn check" }
   ]
 }
 ```
 
 Error sources:
 - **Bean validation** (invalid format, missing fields) — field names from `@Valid` annotations
+- **Luhn validation** (invalid card number checksum) — `field: "cardNumber"`
 - **Business logic** (expired card) — `field: "expiryDate"`
 - **Malformed JSON** — `field: "requestBody"` or the specific field that failed parsing
+
+### Error Responses
+
+Non-validation errors (404, 429, 502, 500) include `correlationId` and `timestamp` for traceability:
+
+```json
+{
+  "message": "Bank service unavailable",
+  "correlationId": "550e8400-e29b-41d4-a716-446655440000",
+  "timestamp": "2026-02-13T12:00:00Z"
+}
+```
+
+The `correlationId` matches the `X-Correlation-Id` response header and can be used to trace requests through gateway logs.
 
 ## Configuration
 
@@ -111,6 +149,9 @@ All settings are externalized via `.env` (loaded by spring-dotenv):
 | Circuit Breaker | `CB_PERMITTED_CALLS_HALF_OPEN` | `3` | Calls allowed in half-open |
 | Circuit Breaker | `CB_SLIDING_WINDOW_SIZE` | `10` | Sliding window size |
 | Circuit Breaker | `CB_REGISTER_HEALTH_INDICATOR` | `true` | Expose circuit breaker health |
+| Retry | `RETRY_MAX_ATTEMPTS` | `3` | Max retry attempts for bank calls |
+| Retry | `RETRY_WAIT_DURATION` | `500ms` | Initial wait between retries |
+| Retry | `RETRY_BACKOFF_MULTIPLIER` | `2` | Exponential backoff multiplier |
 
 ## Bank Simulator
 
@@ -121,6 +162,8 @@ The bank simulator (Mountebank) runs on port 8080 and decides authorization base
 - **Zero** (0) — 503 error
 
 ## Resilience
+
+**Retry with exponential backoff** — Transient bank failures are retried up to 3 times with exponential backoff (500ms base, 2x multiplier). Only `BankCommunicationException` triggers retries. If all attempts fail, the request falls through to the circuit breaker or returns `502 Bad Gateway`.
 
 **Circuit breaker** — Resilience4j wraps the bank client (`bankClient` instance). When the failure rate exceeds the configured threshold, the circuit opens and subsequent requests immediately return `502 Bad Gateway` with `{"message": "Bank service unavailable"}`. After the wait duration, the circuit transitions to half-open and allows a limited number of probe calls.
 
