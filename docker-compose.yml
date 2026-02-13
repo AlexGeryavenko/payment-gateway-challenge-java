@@ -19,9 +19,8 @@ services:
     ports:
       - "8090:8090"
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
       - BANK_SIMULATOR_URL=http://bank_simulator:8080
-      - MANAGEMENT_OTLP_TRACING_ENDPOINT=http://tempo:4318/v1/traces
+      - OTLP_TRACING_ENDPOINT=http://tempo:4318/v1/traces
     depends_on:
       - bank_simulator
       - tempo
