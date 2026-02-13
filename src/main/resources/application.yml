@@ -1,56 +1,56 @@
 server:
-  port: 8090
+  port: ${SERVER_PORT:8090}
 
 springdoc:
   swagger-ui:
-    enabled: true
+    enabled: ${SPRINGDOC_SWAGGER_ENABLED:true}
   api-docs:
-    enabled: true
+    enabled: ${SPRINGDOC_API_DOCS_ENABLED:true}
 
 bank:
   simulator:
-    url: http://localhost:8080
-    connect-timeout: 10s
-    read-timeout: 10s
+    url: ${BANK_SIMULATOR_URL:http://localhost:8080}
+    connect-timeout: ${BANK_SIMULATOR_CONNECT_TIMEOUT:10s}
+    read-timeout: ${BANK_SIMULATOR_READ_TIMEOUT:10s}
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus,metrics
+        include: ${MANAGEMENT_ENDPOINTS_INCLUDE:health,info,prometheus,metrics}
   endpoint:
     prometheus:
-      enabled: true
+      enabled: ${PROMETHEUS_ENDPOINT_ENABLED:true}
   prometheus:
     metrics:
       export:
-        enabled: true
+        enabled: ${PROMETHEUS_EXPORT_ENABLED:true}
   tracing:
     sampling:
-      probability: 1.0
+      probability: ${TRACING_SAMPLING_PROBABILITY:1.0}
   otlp:
     tracing:
-      endpoint: http://localhost:4318/v1/traces
+      endpoint: ${OTLP_TRACING_ENDPOINT:http://localhost:4318/v1/traces}
   metrics:
     tags:
-      application: payment-gateway
+      application: ${METRICS_APP_NAME:payment-gateway}
 
 resilience4j:
   circuitbreaker:
     instances:
       bankClient:
-        failure-rate-threshold: 50
-        slow-call-duration-threshold: 3s
-        slow-call-rate-threshold: 80
-        wait-duration-in-open-state: 30s
-        permitted-number-of-calls-in-half-open-state: 3
-        sliding-window-size: 10
-        register-health-indicator: true
+        failure-rate-threshold: ${CB_FAILURE_RATE_THRESHOLD:50}
+        slow-call-duration-threshold: ${CB_SLOW_CALL_DURATION_THRESHOLD:3s}
+        slow-call-rate-threshold: ${CB_SLOW_CALL_RATE_THRESHOLD:80}
+        wait-duration-in-open-state: ${CB_WAIT_DURATION_IN_OPEN_STATE:30s}
+        permitted-number-of-calls-in-half-open-state: ${CB_PERMITTED_CALLS_HALF_OPEN:3}
+        sliding-window-size: ${CB_SLIDING_WINDOW_SIZE:10}
+        register-health-indicator: ${CB_REGISTER_HEALTH_INDICATOR:true}
 
 rate-limit:
   post:
-    capacity: 200
-    refill-rate: 100
+    capacity: ${RATE_LIMIT_POST_CAPACITY:200}
+    refill-rate: ${RATE_LIMIT_POST_REFILL_RATE:100}
   get:
-    capacity: 1000
-    refill-rate: 500
+    capacity: ${RATE_LIMIT_GET_CAPACITY:1000}
+    refill-rate: ${RATE_LIMIT_GET_REFILL_RATE:500}
