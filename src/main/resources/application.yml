@@ -34,3 +34,23 @@ management:
   metrics:
     tags:
       application: payment-gateway
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      bankClient:
+        failure-rate-threshold: 50
+        slow-call-duration-threshold: 3s
+        slow-call-rate-threshold: 80
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        sliding-window-size: 10
+        register-health-indicator: true
+
+rate-limit:
+  post:
+    capacity: 200
+    refill-rate: 100
+  get:
+    capacity: 1000
+    refill-rate: 500

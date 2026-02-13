@@ -19,6 +19,8 @@ ext {
     micrometerTracingVersion = '1.1.6'
     otelExporterVersion = '1.25.0'
     logstashEncoderVersion = '7.4'
+    resilience4jVersion = '2.2.0'
+    bucket4jVersion = '8.10.1'
 }
 
 java {
@@ -43,6 +45,10 @@ dependencies {
     implementation "io.micrometer:micrometer-tracing-bridge-otel:${micrometerTracingVersion}"
     implementation "io.opentelemetry:opentelemetry-exporter-otlp:${otelExporterVersion}"
     implementation "net.logstash.logback:logstash-logback-encoder:${logstashEncoderVersion}"
+
+    implementation "io.github.resilience4j:resilience4j-spring-boot3:${resilience4jVersion}"
+    implementation "org.springframework.boot:spring-boot-starter-aop:${springBootVersion}"
+    implementation "com.bucket4j:bucket4j-core:${bucket4jVersion}"
 
     implementation "org.mapstruct:mapstruct:${mapstructVersion}"
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"

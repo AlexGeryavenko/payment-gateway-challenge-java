@@ -3,6 +3,7 @@ package com.checkout.payment.gateway.exception;
 import com.checkout.payment.gateway.api.model.ErrorResponse;
 import com.checkout.payment.gateway.api.model.ProcessPaymentResponse;
 import com.checkout.payment.gateway.api.model.ProcessPaymentResponse.StatusEnum;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,13 @@ public class CommonExceptionHandler {
     LOG.error("Exception happened", ex);
     return new ResponseEntity<>(new ErrorResponse().message("Page not found"),
         HttpStatus.NOT_FOUND);
+  }
+
+  @ExceptionHandler(CallNotPermittedException.class)
+  public ResponseEntity<ErrorResponse> handleCircuitBreakerOpen(CallNotPermittedException ex) {
+    LOG.warn("Circuit breaker open: {}", ex.getMessage());
+    return new ResponseEntity<>(new ErrorResponse().message("Bank service unavailable"),
+        HttpStatus.BAD_GATEWAY);
   }
 
   @ExceptionHandler(BankCommunicationException.class)
