@@ -13,9 +13,11 @@ import com.checkout.payment.gateway.api.model.ValidationErrorResponse.StatusEnum
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import java.time.OffsetDateTime;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -32,14 +34,13 @@ public class CommonExceptionHandler {
   @ExceptionHandler(EventProcessingException.class)
   public ResponseEntity<ErrorResponse> handleException(EventProcessingException ex) {
     LOG.error("Exception happened", ex);
-    return new ResponseEntity<>(new ErrorResponse().message("Page not found"),
-        HttpStatus.NOT_FOUND);
+    return new ResponseEntity<>(errorResponse("Page not found"), HttpStatus.NOT_FOUND);
   }
 
   @ExceptionHandler(CallNotPermittedException.class)
   public ResponseEntity<ErrorResponse> handleCircuitBreakerOpen(CallNotPermittedException ex) {
     LOG.warn("Circuit breaker open: {}", ex.getMessage());
-    return new ResponseEntity<>(new ErrorResponse().message("Bank service unavailable"),
+    return new ResponseEntity<>(errorResponse("Bank service unavailable"),
         HttpStatus.BAD_GATEWAY);
   }
 
@@ -47,7 +48,7 @@ public class CommonExceptionHandler {
   public ResponseEntity<ErrorResponse> handleBankCommunicationException(
       BankCommunicationException ex) {
     LOG.error("Bank communication failed", ex);
-    return new ResponseEntity<>(new ErrorResponse().message("Bank service unavailable"),
+    return new ResponseEntity<>(errorResponse("Bank service unavailable"),
         HttpStatus.BAD_GATEWAY);
   }
 
@@ -99,7 +100,7 @@ public class CommonExceptionHandler {
   public ResponseEntity<ErrorResponse> handleTypeMismatchException(
       MethodArgumentTypeMismatchException ex) {
     LOG.warn("Invalid request parameter: {}", ex.getMessage());
-    return new ResponseEntity<>(new ErrorResponse().message("Invalid request parameter"),
+    return new ResponseEntity<>(errorResponse("Invalid request parameter"),
         HttpStatus.BAD_REQUEST);
   }
 
@@ -107,8 +108,15 @@ public class CommonExceptionHandler {
   public ResponseEntity<ErrorResponse> handleUnexpectedException(Exception ex) {
     LOG.error("Unexpected error occurred", ex);
     return new ResponseEntity<>(
-        new ErrorResponse().message("An unexpected error occurred. Please try again later."),
+        errorResponse("An unexpected error occurred. Please try again later."),
         HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
+  private static ErrorResponse errorResponse(String message) {
+    return new ErrorResponse()
+        .message(message)
+        .correlationId(MDC.get("correlationId"))
+        .timestamp(OffsetDateTime.now());
   }
 
   private static ValidationErrorResponse validationError(List<FieldError> errors) {
