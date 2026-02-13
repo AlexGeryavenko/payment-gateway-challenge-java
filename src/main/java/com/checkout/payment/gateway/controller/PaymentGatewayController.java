@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController("api")
@@ -38,8 +39,10 @@ public class PaymentGatewayController {
 
   @PostMapping("/v1/payment")
   public ResponseEntity<ProcessPaymentResponse> processPayment(
-      @Valid @RequestBody ProcessPaymentRequest request) {
+      @Valid @RequestBody ProcessPaymentRequest request,
+      @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
     Payment payment = apiMapper.toDomain(request);
+    payment.setIdempotencyKey(idempotencyKey);
     Payment result = processPaymentUseCase.execute(payment);
     return new ResponseEntity<>(apiMapper.toProcessResponse(result), HttpStatus.OK);
   }

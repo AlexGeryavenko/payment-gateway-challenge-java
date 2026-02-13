@@ -11,6 +11,7 @@ public class PaymentEntity {
   private int expiryYear;
   private String currency;
   private int amount;
+  private String idempotencyKey;
 
   public UUID getId() {
     return id;
@@ -66,5 +67,13 @@ public class PaymentEntity {
 
   public void setAmount(int amount) {
     this.amount = amount;
+  }
+
+  public String getIdempotencyKey() {
+    return idempotencyKey;
+  }
+
+  public void setIdempotencyKey(String idempotencyKey) {
+    this.idempotencyKey = idempotencyKey;
   }
 }

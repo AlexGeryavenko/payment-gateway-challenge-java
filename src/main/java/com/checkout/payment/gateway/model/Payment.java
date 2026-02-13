@@ -13,6 +13,7 @@ public class Payment {
   private String currency;
   private int amount;
   private String cvv;
+  private String idempotencyKey;
 
   public UUID getId() {
     return id;
@@ -84,6 +85,14 @@ public class Payment {
 
   public void setCvv(String cvv) {
     this.cvv = cvv;
+  }
+
+  public String getIdempotencyKey() {
+    return idempotencyKey;
+  }
+
+  public void setIdempotencyKey(String idempotencyKey) {
+    this.idempotencyKey = idempotencyKey;
   }
 
   @Override
