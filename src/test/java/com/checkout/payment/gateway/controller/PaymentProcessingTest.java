@@ -1,5 +1,6 @@
 package com.checkout.payment.gateway.controller;
 
+import static com.checkout.payment.gateway.controller.JsonFixture.readFixture;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -63,20 +64,9 @@ class PaymentProcessingTest {
 
   @Test
   void postPayment_expiredCard_returns400Rejected() throws Exception {
-    String expiredCardJson = """
-        {
-          "cardNumber": "2222405343248877",
-          "expiryMonth": 1,
-          "expiryYear": 2024,
-          "currency": "GBP",
-          "amount": 100,
-          "cvv": "123"
-        }
-        """;
-
     mvc.perform(MockMvcRequestBuilders.post("/payment")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(expiredCardJson))
+            .content(readFixture("/fixtures/expired-card-payment.json")))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.status").value("Rejected"));
 
@@ -121,20 +111,9 @@ class PaymentProcessingTest {
 
   @Test
   void postPayment_invalidCardNumber_returns400Rejected() throws Exception {
-    String invalidCardJson = """
-        {
-          "cardNumber": "123",
-          "expiryMonth": 4,
-          "expiryYear": 2027,
-          "currency": "GBP",
-          "amount": 100,
-          "cvv": "123"
-        }
-        """;
-
     mvc.perform(MockMvcRequestBuilders.post("/payment")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(invalidCardJson))
+            .content(readFixture("/fixtures/invalid-card-number-payment.json")))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.status").value("Rejected"));
 
@@ -143,34 +122,14 @@ class PaymentProcessingTest {
 
   @Test
   void postPayment_invalidCurrency_returns400Rejected() throws Exception {
-    String invalidCurrencyJson = """
-        {
-          "cardNumber": "2222405343248877",
-          "expiryMonth": 4,
-          "expiryYear": 2027,
-          "currency": "JPY",
-          "amount": 100,
-          "cvv": "123"
-        }
-        """;
-
     mvc.perform(MockMvcRequestBuilders.post("/payment")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(invalidCurrencyJson))
+            .content(readFixture("/fixtures/invalid-currency-payment.json")))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.status").value("Rejected"));
   }
 
   private String validPaymentJson() {
-    return """
-        {
-          "cardNumber": "2222405343248877",
-          "expiryMonth": 4,
-          "expiryYear": 2027,
-          "currency": "GBP",
-          "amount": 100,
-          "cvv": "123"
-        }
-        """;
+    return readFixture("/fixtures/valid-payment.json");
   }
 }

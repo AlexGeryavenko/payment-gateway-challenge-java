@@ -1,0 +1,8 @@
+{
+  "cardNumber": "123",
+  "expiryMonth": 4,
+  "expiryYear": 2027,
+  "currency": "GBP",
+  "amount": 100,
+  "cvv": "123"
+}
