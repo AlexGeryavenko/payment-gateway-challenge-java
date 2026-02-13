@@ -1,9 +1,19 @@
 package com.checkout.payment.gateway.exception;
 
+import static com.checkout.payment.gateway.exception.ValidationErrors.CURRENCY_INVALID;
+import static com.checkout.payment.gateway.exception.ValidationErrors.FIELD_CURRENCY;
+import static com.checkout.payment.gateway.exception.ValidationErrors.FIELD_REQUEST_BODY;
+import static com.checkout.payment.gateway.exception.ValidationErrors.MALFORMED_JSON;
+import static com.checkout.payment.gateway.exception.ValidationErrors.VALIDATION_FAILED;
+
 import com.checkout.payment.gateway.api.model.ErrorResponse;
-import com.checkout.payment.gateway.api.model.ProcessPaymentResponse;
-import com.checkout.payment.gateway.api.model.ProcessPaymentResponse.StatusEnum;
+import com.checkout.payment.gateway.api.model.FieldError;
+import com.checkout.payment.gateway.api.model.ValidationErrorResponse;
+import com.checkout.payment.gateway.api.model.ValidationErrorResponse.StatusEnum;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -42,19 +52,47 @@ public class CommonExceptionHandler {
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<ProcessPaymentResponse> handleValidationException(
+  public ResponseEntity<ValidationErrorResponse> handleValidationException(
       MethodArgumentNotValidException ex) {
     LOG.warn("Validation failed: {}", ex.getMessage());
-    return new ResponseEntity<>(new ProcessPaymentResponse().status(StatusEnum.REJECTED),
-        HttpStatus.BAD_REQUEST);
+
+    List<FieldError> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
+        .map(fe -> new FieldError().field(fe.getField()).message(fe.getDefaultMessage()))
+        .toList();
+
+    return new ResponseEntity<>(validationError(fieldErrors), HttpStatus.BAD_REQUEST);
   }
 
   @ExceptionHandler(HttpMessageNotReadableException.class)
-  public ResponseEntity<ProcessPaymentResponse> handleMessageNotReadableException(
+  public ResponseEntity<ValidationErrorResponse> handleMessageNotReadableException(
       HttpMessageNotReadableException ex) {
     LOG.warn("Malformed request: {}", ex.getMessage());
-    return new ResponseEntity<>(new ProcessPaymentResponse().status(StatusEnum.REJECTED),
-        HttpStatus.BAD_REQUEST);
+
+    FieldError fieldError;
+    if (ex.getCause() instanceof JsonMappingException jme
+        && jme.getPath() != null && !jme.getPath().isEmpty()) {
+      String fieldName = jme.getPath().get(0).getFieldName();
+      if ("currency".equals(fieldName)) {
+        fieldError = new FieldError().field(FIELD_CURRENCY).message(CURRENCY_INVALID);
+      } else if (ex.getCause() instanceof InvalidFormatException ife) {
+        fieldError = new FieldError().field(fieldName).message(ife.getOriginalMessage());
+      } else {
+        fieldError = new FieldError().field(fieldName).message(jme.getOriginalMessage());
+      }
+    } else {
+      fieldError = new FieldError().field(FIELD_REQUEST_BODY).message(MALFORMED_JSON);
+    }
+
+    return new ResponseEntity<>(validationError(List.of(fieldError)), HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(PaymentValidationException.class)
+  public ResponseEntity<ValidationErrorResponse> handlePaymentValidationException(
+      PaymentValidationException ex) {
+    LOG.warn("Payment validation failed: field={}, message={}", ex.getField(), ex.getMessage());
+
+    FieldError fieldError = new FieldError().field(ex.getField()).message(ex.getMessage());
+    return new ResponseEntity<>(validationError(List.of(fieldError)), HttpStatus.BAD_REQUEST);
   }
 
   @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -71,5 +109,12 @@ public class CommonExceptionHandler {
     return new ResponseEntity<>(
         new ErrorResponse().message("An unexpected error occurred. Please try again later."),
         HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
+  private static ValidationErrorResponse validationError(List<FieldError> errors) {
+    return new ValidationErrorResponse()
+        .status(StatusEnum.REJECTED)
+        .message(VALIDATION_FAILED)
+        .errors(errors);
   }
 }

@@ -133,7 +133,10 @@ class PaymentValidationEdgeCaseTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(json))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.status").value("Rejected"));
+        .andExpect(jsonPath("$.status").value("Rejected"))
+        .andExpect(jsonPath("$.message").value("Validation failed"))
+        .andExpect(jsonPath("$.errors").isArray())
+        .andExpect(jsonPath("$.errors").isNotEmpty());
 
     verify(bankApi, never()).authorizePayment(any());
   }

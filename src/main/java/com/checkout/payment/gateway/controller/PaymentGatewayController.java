@@ -4,7 +4,6 @@ import com.checkout.payment.gateway.api.model.ProcessPaymentRequest;
 import com.checkout.payment.gateway.api.model.ProcessPaymentResponse;
 import com.checkout.payment.gateway.mapper.PaymentApiMapper;
 import com.checkout.payment.gateway.model.Payment;
-import com.checkout.payment.gateway.model.PaymentStatus;
 import com.checkout.payment.gateway.usecase.GetPaymentByIdUseCase;
 import com.checkout.payment.gateway.usecase.ProcessPaymentUseCase;
 import jakarta.validation.Valid;
@@ -42,9 +41,6 @@ public class PaymentGatewayController {
       @Valid @RequestBody ProcessPaymentRequest request) {
     Payment payment = apiMapper.toDomain(request);
     Payment result = processPaymentUseCase.execute(payment);
-    ProcessPaymentResponse response = apiMapper.toProcessResponse(result);
-    HttpStatus status = result.getStatus() == PaymentStatus.REJECTED
-        ? HttpStatus.BAD_REQUEST : HttpStatus.OK;
-    return new ResponseEntity<>(response, status);
+    return new ResponseEntity<>(apiMapper.toProcessResponse(result), HttpStatus.OK);
   }
 }

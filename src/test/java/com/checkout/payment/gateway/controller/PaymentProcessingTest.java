@@ -68,7 +68,11 @@ class PaymentProcessingTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(readFixture("/fixtures/expired-card-payment.json")))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.status").value("Rejected"));
+        .andExpect(jsonPath("$.status").value("Rejected"))
+        .andExpect(jsonPath("$.message").value("Validation failed"))
+        .andExpect(jsonPath("$.errors[0].field").value("expiryDate"))
+        .andExpect(jsonPath("$.errors[0].message")
+            .value("Card expiry date must be in the future"));
 
     verify(bankApi, never()).authorizePayment(any());
   }
@@ -115,7 +119,9 @@ class PaymentProcessingTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(readFixture("/fixtures/invalid-card-number-payment.json")))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.status").value("Rejected"));
+        .andExpect(jsonPath("$.status").value("Rejected"))
+        .andExpect(jsonPath("$.message").value("Validation failed"))
+        .andExpect(jsonPath("$.errors[0].field").value("cardNumber"));
 
     verify(bankApi, never()).authorizePayment(any());
   }
@@ -126,7 +132,9 @@ class PaymentProcessingTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(readFixture("/fixtures/invalid-currency-payment.json")))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.status").value("Rejected"));
+        .andExpect(jsonPath("$.status").value("Rejected"))
+        .andExpect(jsonPath("$.message").value("Validation failed"))
+        .andExpect(jsonPath("$.errors[0].field").value("currency"));
   }
 
   private String validPaymentJson() {
