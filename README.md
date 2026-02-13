@@ -184,6 +184,7 @@ Swagger UI: http://localhost:8090/swagger-ui/index.html
 ## Documentation
 
 - [Implementation Plan](doc/PLAN.md)
+- [Error Reference](doc/ERROR_REFERENCE.md)
 - [Payment Gateway OpenAPI Spec](doc/openapi/payment-gateway.yaml)
 - [Bank Simulator OpenAPI Spec](doc/openapi/bank-simulator.yaml)
 - [C4 Architecture Diagrams](doc/diagram/)
