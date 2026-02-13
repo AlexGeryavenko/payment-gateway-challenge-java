@@ -44,7 +44,7 @@ paths:
               declined:
                 summary: Card ending in even digit (declined)
                 value:
-                  card_number: "2222405343248878"
+                  card_number: "2222405343248828"
                   expiry_date: "04/2025"
                   currency: "GBP"
                   amount: 100
@@ -52,7 +52,7 @@ paths:
               error:
                 summary: Card ending in 0 (503 error)
                 value:
-                  card_number: "2222405343248870"
+                  card_number: "2222405343248810"
                   expiry_date: "04/2025"
                   currency: "GBP"
                   amount: 100
