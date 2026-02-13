@@ -12,6 +12,7 @@ import com.checkout.payment.gateway.repository.PaymentRepository;
 import com.checkout.payment.gateway.validation.PaymentValidator;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +47,16 @@ public class ProcessPaymentUseCase {
 
   private Payment doExecute(Payment payment) {
     try {
+      if (payment.getIdempotencyKey() != null) {
+        Optional<Payment> existing =
+            paymentRepository.findByIdempotencyKey(payment.getIdempotencyKey());
+        if (existing.isPresent()) {
+          LOG.info("Idempotent request — returning cached response for key={}",
+              payment.getIdempotencyKey());
+          return existing.get();
+        }
+      }
+
       Boolean validResult = Observation
           .createNotStarted("validate-payment", observationRegistry)
           .observe(() -> paymentValidator.isValid(payment));

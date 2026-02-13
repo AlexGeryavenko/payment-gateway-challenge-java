@@ -5,7 +5,7 @@ info:
     Checkout.com Payment Gateway — processes card payments through an acquiring bank
     and stores results in memory. Merchants can submit payments and retrieve
     previously made payments by ID.
-  version: 0.3.0
+  version: 0.4.0
   contact:
     name: Checkout.com
 
@@ -28,6 +28,18 @@ paths:
         - **Rejected** (400) — validation failed, bank NOT called, payment NOT stored
       tags:
         - Payments
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: |
+            Optional UUID to ensure idempotent processing. If a payment with the same
+            key has already been processed, the cached response is returned without
+            calling the bank again. Recommended for retry-safe integrations.
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
       requestBody:
         required: true
         content:
