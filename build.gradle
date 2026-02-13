@@ -15,6 +15,8 @@ ext {
     swaggerAnnotationsVersion = '2.2.19'
     jacksonDatabindNullableVersion = '0.2.6'
     mapstructVersion = '1.5.5.Final'
+    micrometerVersion = '1.11.5'
+    logstashEncoderVersion = '7.4'
 }
 
 java {
@@ -33,6 +35,10 @@ dependencies {
     implementation "com.google.code.findbugs:jsr305:${jsr305Version}"
     implementation "io.swagger.core.v3:swagger-annotations:${swaggerAnnotationsVersion}"
     implementation "org.openapitools:jackson-databind-nullable:${jacksonDatabindNullableVersion}"
+
+    implementation "org.springframework.boot:spring-boot-starter-actuator:${springBootVersion}"
+    implementation "io.micrometer:micrometer-registry-prometheus:${micrometerVersion}"
+    implementation "net.logstash.logback:logstash-logback-encoder:${logstashEncoderVersion}"
 
     implementation "org.mapstruct:mapstruct:${mapstructVersion}"
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"

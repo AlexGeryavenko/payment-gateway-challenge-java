@@ -12,4 +12,14 @@ services:
       - type: bind
         source: ./imposters
         target: /imposters
-      
+
+  payment-gateway:
+    container_name: payment-gateway
+    build: .
+    ports:
+      - "8090:8090"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - BANK_SIMULATOR_URL=http://bank_simulator:8080
+    depends_on:
+      - bank_simulator

@@ -12,3 +12,19 @@ bank:
     url: http://localhost:8080
     connect-timeout: 10s
     read-timeout: 10s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    prometheus:
+      enabled: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  metrics:
+    tags:
+      application: payment-gateway

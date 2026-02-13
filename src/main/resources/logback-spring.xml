@@ -2,13 +2,25 @@
 <configuration>
   <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
 
-  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-    <layout class="com.checkout.payment.gateway.logging.MaskingPatternLayout">
-      <pattern>${CONSOLE_LOG_PATTERN}</pattern>
-    </layout>
-  </appender>
+  <springProfile name="!docker">
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+      <layout class="com.checkout.payment.gateway.logging.MaskingPatternLayout">
+        <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) [%thread] [%mdc] %cyan(%logger{36}) — %msg%n</pattern>
+      </layout>
+    </appender>
 
-  <root level="INFO">
-    <appender-ref ref="CONSOLE"/>
-  </root>
+    <root level="INFO">
+      <appender-ref ref="CONSOLE"/>
+    </root>
+  </springProfile>
+
+  <springProfile name="docker">
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder class="com.checkout.payment.gateway.logging.MaskingJsonEncoder"/>
+    </appender>
+
+    <root level="INFO">
+      <appender-ref ref="JSON_CONSOLE"/>
+    </root>
+  </springProfile>
 </configuration>
