@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+    "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+    "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<!--
+    Checkstyle configuration based on Google Java Style with project-specific tweaks.
+-->
+<module name="Checker">
+  <property name="charset" value="UTF-8"/>
+  <property name="severity" value="error"/>
+  <property name="fileExtensions" value="java"/>
+
+  <!-- Suppress generated code and specific checks -->
+  <module name="SuppressionSingleFilter">
+    <property name="files" value="build[\\/]generated[\\/]"/>
+  </module>
+  <module name="SuppressionSingleFilter">
+    <property name="files" value="PaymentGatewayApplication\.java$"/>
+    <property name="checks" value="HideUtilityClassConstructor"/>
+  </module>
+
+  <!-- No tabs -->
+  <module name="FileTabCharacter">
+    <property name="eachLine" value="true"/>
+  </module>
+
+  <!-- Line length (Checker-level module) -->
+  <module name="LineLength">
+    <property name="max" value="100"/>
+    <property name="ignorePattern"
+              value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
+  </module>
+
+  <module name="TreeWalker">
+    <!-- ===== Indentation ===== -->
+    <module name="Indentation">
+      <property name="basicOffset" value="2"/>
+      <property name="braceAdjustment" value="0"/>
+      <property name="caseIndent" value="2"/>
+      <property name="throwsIndent" value="4"/>
+      <property name="lineWrappingIndentation" value="4"/>
+      <property name="arrayInitIndent" value="2"/>
+    </module>
+
+    <!-- ===== Imports ===== -->
+    <module name="AvoidStarImport"/>
+    <module name="UnusedImports"/>
+    <module name="RedundantImport"/>
+    <module name="IllegalImport">
+      <property name="illegalPkgs" value="sun"/>
+    </module>
+
+    <!-- ===== Naming ===== -->
+    <module name="TypeName">
+      <property name="format" value="^[A-Z][a-zA-Z0-9]*$"/>
+    </module>
+    <module name="MemberName">
+      <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+    </module>
+    <module name="ParameterName">
+      <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+    </module>
+    <module name="LocalVariableName">
+      <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+    </module>
+    <module name="ConstantName">
+      <property name="format" value="^(log(ger)?|[A-Z][A-Z0-9]*(_[A-Z0-9]+)*)$"/>
+    </module>
+    <module name="MethodName">
+      <property name="format" value="^[a-z][a-zA-Z0-9_]*$"/>
+    </module>
+
+    <!-- ===== Whitespace ===== -->
+    <module name="WhitespaceAround">
+      <property name="allowEmptyConstructors" value="true"/>
+      <property name="allowEmptyMethods" value="true"/>
+      <property name="allowEmptyTypes" value="true"/>
+      <property name="allowEmptyLoops" value="true"/>
+      <property name="allowEmptyLambdas" value="true"/>
+      <property name="allowEmptyCatches" value="true"/>
+    </module>
+    <module name="WhitespaceAfter"/>
+    <module name="GenericWhitespace"/>
+    <module name="NoWhitespaceBefore"/>
+
+    <!-- ===== Blocks / braces ===== -->
+    <module name="NeedBraces"/>
+    <module name="LeftCurly"/>
+    <module name="RightCurly"/>
+
+    <!-- ===== Coding ===== -->
+    <module name="OneStatementPerLine"/>
+    <module name="MissingSwitchDefault"/>
+    <module name="EqualsHashCode"/>
+    <module name="OneTopLevelClass"/>
+    <module name="HideUtilityClassConstructor"/>
+  </module>
+</module>
