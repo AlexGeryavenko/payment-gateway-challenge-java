@@ -1,6 +1,8 @@
 package com.checkout.payment.gateway.usecase;
 
+import static com.checkout.payment.gateway.exception.ValidationErrors.CARD_NUMBER_INVALID_LUHN;
 import static com.checkout.payment.gateway.exception.ValidationErrors.EXPIRY_DATE_IN_FUTURE;
+import static com.checkout.payment.gateway.exception.ValidationErrors.FIELD_CARD_NUMBER;
 import static com.checkout.payment.gateway.exception.ValidationErrors.FIELD_EXPIRY_DATE;
 
 import com.checkout.payment.gateway.client.BankPaymentAdapter;
@@ -57,17 +59,24 @@ public class ProcessPaymentUseCase {
         }
       }
 
-      Boolean validResult = Observation
-          .createNotStarted("validate-payment", observationRegistry)
-          .observe(() -> paymentValidator.isValid(payment));
-      boolean valid = Boolean.TRUE.equals(validResult);
-
-      if (!valid) {
-        LOG.info("Payment rejected — validation failed");
-        paymentMetrics.recordPaymentProcessed(
-            PaymentStatus.REJECTED.name(), payment.getCurrency());
-        throw new PaymentValidationException(FIELD_EXPIRY_DATE, EXPIRY_DATE_IN_FUTURE);
-      }
+      Observation.createNotStarted("validate-payment", observationRegistry)
+          .observe(() -> {
+            if (!paymentValidator.isCardNumberValid(payment)) {
+              LOG.info("Payment rejected — Luhn check failed");
+              paymentMetrics.recordPaymentProcessed(
+                  PaymentStatus.REJECTED.name(), payment.getCurrency());
+              throw new PaymentValidationException(
+                  FIELD_CARD_NUMBER, CARD_NUMBER_INVALID_LUHN);
+            }
+            if (!paymentValidator.isValid(payment)) {
+              LOG.info("Payment rejected — validation failed");
+              paymentMetrics.recordPaymentProcessed(
+                  PaymentStatus.REJECTED.name(), payment.getCurrency());
+              throw new PaymentValidationException(
+                  FIELD_EXPIRY_DATE, EXPIRY_DATE_IN_FUTURE);
+            }
+            return null;
+          });
 
       payment.setId(UUID.randomUUID());
       MDC.put("paymentId", payment.getId().toString());
