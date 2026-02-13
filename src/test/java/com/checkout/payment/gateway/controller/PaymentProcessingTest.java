@@ -137,6 +137,20 @@ class PaymentProcessingTest {
         .andExpect(jsonPath("$.errors[0].field").value("currency"));
   }
 
+  @Test
+  void postPayment_luhnInvalidCard_returns400Rejected() throws Exception {
+    mvc.perform(MockMvcRequestBuilders.post("/v1/payment")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(readFixture("/fixtures/luhn-invalid-payment.json")))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value("Rejected"))
+        .andExpect(jsonPath("$.message").value("Validation failed"))
+        .andExpect(jsonPath("$.errors[0].field").value("cardNumber"))
+        .andExpect(jsonPath("$.errors[0].message").value("Card number failed Luhn check"));
+
+    verify(bankApi, never()).authorizePayment(any());
+  }
+
   private String validPaymentJson() {
     return readFixture("/fixtures/valid-payment.json");
   }
