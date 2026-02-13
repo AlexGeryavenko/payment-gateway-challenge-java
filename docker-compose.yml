@@ -35,6 +35,20 @@ services:
       - type: bind
         source: ./monitoring/prometheus/prometheus.yml
         target: /etc/prometheus/prometheus.yml
+      - type: bind
+        source: ./monitoring/prometheus/alert-rules.yml
+        target: /etc/prometheus/alert-rules.yml
+
+  alertmanager:
+    container_name: alertmanager
+    image: prom/alertmanager:v0.26.0
+    ports:
+      - "9093:9093"
+    volumes:
+      - type: bind
+        source: ./monitoring/alertmanager/alertmanager.yml
+        target: /etc/alertmanager/alertmanager.yml
+    command: --config.file=/etc/alertmanager/alertmanager.yml
 
   tempo:
     container_name: tempo
