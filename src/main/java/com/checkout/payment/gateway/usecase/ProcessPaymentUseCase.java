@@ -85,18 +85,27 @@ public class ProcessPaymentUseCase {
           payment.getCardNumber().substring(payment.getCardNumber().length() - 4));
 
       LOG.info("Requesting bank authorization");
-      PaymentStatus bankResult = Observation
-          .createNotStarted("bank-authorize", observationRegistry)
-          .observe(() -> {
-            try {
-              return paymentMetrics.recordBankCallDuration(
-                  () -> bankPaymentAdapter.authorize(payment));
-            } catch (RuntimeException e) {
-              throw e;
-            } catch (Exception e) {
-              throw new RuntimeException(e);
-            }
-          });
+      PaymentStatus bankResult;
+      try {
+        bankResult = Observation
+            .createNotStarted("bank-authorize", observationRegistry)
+            .observe(() -> {
+              try {
+                return paymentMetrics.recordBankCallDuration(
+                    () -> bankPaymentAdapter.authorize(payment));
+              } catch (RuntimeException e) {
+                throw e;
+              } catch (Exception e) {
+                throw new RuntimeException(e);
+              }
+            });
+      } catch (RuntimeException ex) {
+        LOG.error("Bank authorization failed — paymentId={}, cardLast4={},"
+                + " currency={}, amount={}",
+            payment.getId(), payment.getCardNumberLastFour(),
+            payment.getCurrency(), payment.getAmount(), ex);
+        throw ex;
+      }
       PaymentStatus status = bankResult != null ? bankResult : PaymentStatus.DECLINED;
       payment.setStatus(status);
 
