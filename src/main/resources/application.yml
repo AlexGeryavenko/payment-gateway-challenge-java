@@ -46,6 +46,14 @@ resilience4j:
         permitted-number-of-calls-in-half-open-state: ${CB_PERMITTED_CALLS_HALF_OPEN:3}
         sliding-window-size: ${CB_SLIDING_WINDOW_SIZE:10}
         register-health-indicator: ${CB_REGISTER_HEALTH_INDICATOR:true}
+  retry:
+    instances:
+      bankClient:
+        max-attempts: ${RETRY_MAX_ATTEMPTS:3}
+        wait-duration: ${RETRY_WAIT_DURATION:500ms}
+        exponential-backoff-multiplier: ${RETRY_BACKOFF_MULTIPLIER:2}
+        retry-exceptions:
+          - com.checkout.payment.gateway.exception.BankCommunicationException
 
 rate-limit:
   post:
