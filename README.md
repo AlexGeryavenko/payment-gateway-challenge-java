@@ -62,6 +62,26 @@ curl -s -X POST http://localhost:8090/v1/payment \
 curl -s http://localhost:8090/v1/payment/{id}
 ```
 
+### Validation Errors (400)
+
+All validation failures return a `ValidationErrorResponse` with field-level error details:
+
+```json
+{
+  "status": "Rejected",
+  "message": "Validation failed",
+  "errors": [
+    { "field": "cardNumber", "message": "size must be between 14 and 19" },
+    { "field": "cvv", "message": "must match \"^\\d{3,4}$\"" }
+  ]
+}
+```
+
+Error sources:
+- **Bean validation** (invalid format, missing fields) — field names from `@Valid` annotations
+- **Business logic** (expired card) — `field: "expiryDate"`
+- **Malformed JSON** — `field: "requestBody"` or the specific field that failed parsing
+
 ## Configuration
 
 All settings are externalized via `.env` (loaded by spring-dotenv):

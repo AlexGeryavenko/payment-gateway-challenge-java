@@ -5,7 +5,7 @@ info:
     Checkout.com Payment Gateway — processes card payments through an acquiring bank
     and stores results in memory. Merchants can submit payments and retrieve
     previously made payments by ID.
-  version: 1.0.0
+  version: 0.3.0
   contact:
     name: Checkout.com
 
@@ -95,15 +95,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProcessPaymentResponse'
+                $ref: '#/components/schemas/ValidationErrorResponse'
               example:
-                id: null
                 status: "Rejected"
-                cardNumberLastFour: null
-                expiryMonth: 0
-                expiryYear: 0
-                currency: null
-                amount: 0
+                message: "Validation failed"
+                errors:
+                  - field: "cardNumber"
+                    message: "size must be between 14 and 19"
         '429':
           description: Rate limited
           headers:
@@ -318,3 +316,34 @@ components:
           type: string
           description: Error description
           example: "Payment not found"
+
+    FieldError:
+      type: object
+      properties:
+        field:
+          type: string
+          description: Name of the field that failed validation
+          example: "cardNumber"
+        message:
+          type: string
+          description: Description of the validation failure
+          example: "size must be between 14 and 19"
+
+    ValidationErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Always "Rejected" for validation errors
+          enum:
+            - Rejected
+          example: "Rejected"
+        message:
+          type: string
+          description: Summary of the error
+          example: "Validation failed"
+        errors:
+          type: array
+          description: List of field-level validation errors
+          items:
+            $ref: '#/components/schemas/FieldError'

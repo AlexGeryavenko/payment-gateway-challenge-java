@@ -1,6 +1,10 @@
 package com.checkout.payment.gateway.usecase;
 
+import static com.checkout.payment.gateway.exception.ValidationErrors.EXPIRY_DATE_IN_FUTURE;
+import static com.checkout.payment.gateway.exception.ValidationErrors.FIELD_EXPIRY_DATE;
+
 import com.checkout.payment.gateway.client.BankPaymentAdapter;
+import com.checkout.payment.gateway.exception.PaymentValidationException;
 import com.checkout.payment.gateway.metrics.PaymentMetrics;
 import com.checkout.payment.gateway.model.Payment;
 import com.checkout.payment.gateway.model.PaymentStatus;
@@ -49,10 +53,9 @@ public class ProcessPaymentUseCase {
 
       if (!valid) {
         LOG.info("Payment rejected — validation failed");
-        payment.setStatus(PaymentStatus.REJECTED);
         paymentMetrics.recordPaymentProcessed(
             PaymentStatus.REJECTED.name(), payment.getCurrency());
-        return payment;
+        throw new PaymentValidationException(FIELD_EXPIRY_DATE, EXPIRY_DATE_IN_FUTURE);
       }
 
       payment.setId(UUID.randomUUID());
